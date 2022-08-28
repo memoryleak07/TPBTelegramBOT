@@ -175,6 +175,15 @@ async def cancel(update: Update, context: ContextTypes.context) -> int:
     return ConversationHandler.END
 
 
+def test():
+    #categories = pirate.PrintCategories()
+    # print(categories[6])
+    # pirate.QuickSearch("pink floyd flac")
+    keyword = "nirvana"
+    foundtorrents = pirate.CustomizedSearch(keyword, 104)
+    return foundtorrents
+
+
 
 def main() -> None:
     """Run the bot."""
@@ -208,12 +217,7 @@ def main() -> None:
 
 
 
-def test(keyword:str):
-    #categories = pirate.PrintCategories()
-    # print(categories[6])
-    # pirate.QuickSearch("pink floyd flac")
-    foundtorrents = pirate.CustomizedSearch(keyword, 104)
-    return foundtorrents
+
     
 if __name__ == "__main__":
     # main()
