@@ -198,11 +198,6 @@ def main() -> None:
                 MessageHandler(filters.Regex("^(Music|Movie|Other)$"), categories),
                 CommandHandler("skip", skip_categories),
                 ],
-            # PHOTO: [MessageHandler(filters.PHOTO, photo), CommandHandler("skip", skip_photo)],
-            # LOCATION: [
-            #     MessageHandler(filters.LOCATION, location),
-            #     CommandHandler("skip", skip_location),
-            # ],
             KEYWORD: [MessageHandler(filters.TEXT & ~filters.COMMAND, keyword)],
             CHOOSE: [MessageHandler(filters.TEXT & ~filters.COMMAND, choose)],
         },
