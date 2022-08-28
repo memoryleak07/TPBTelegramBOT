@@ -68,16 +68,18 @@ async def start(update: Update, context: ContextTypes.context) -> int:
 
     return CATEGORIES
 
+
 async def skip_categories(update: Update, context: ContextTypes.context) -> int:
     """Skips the categories and asks for keyword."""
     user = update.message.from_user
     logger.info("User %s did not set a category.", user.first_name)
     await update.message.reply_text(
         "Ok! Now, input a keyword to search...",
-        reply_markup=ReplyKeyboardRemove(),
+        reply_markup=ReplyKeyboardRemove(), 
     )
 
     return CATEGORIES
+
 
 
 async def categories(update: Update, context: ContextTypes.context) -> int:
@@ -90,20 +92,6 @@ async def categories(update: Update, context: ContextTypes.context) -> int:
     )
 
     return KEYWORD
-
-#funzionava=
-# async def keyword(update: Update, context: ContextTypes.context) -> int:
-#     """Stores the keyword to search and ends the conversation."""
-#     user = update.message.from_user
-#     logger.info("Keyword of %s: %s", user.first_name, update.message.text)
-#     # Call function return list, iterate over list to printe single msg
-#     foundtorrents = pirate.CustomizedSearch(update.message.text, 104)
-#     for torrent in foundtorrents:
-#         await update.message.reply_text(torrent)
-
-#     await update.message.reply_text("Thank you! I hope we can talk again some day.")
-    
-#     return ConversationHandler.END
 
 
 async def keyword(update: Update, context: ContextTypes.context) -> int:
@@ -120,23 +108,39 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
         reply_markup=ReplyKeyboardRemove(),
         )
 
-    return CHOOSE, torrent
+    return CHOOSE
+
+#funzionava prima di aggiungere CHOOSE!!!=
+# async def keyword(update: Update, context: ContextTypes.context) -> int:
+#     """Stores the keyword to search and ends the conversation."""
+#     user = update.message.from_user
+#     logger.info("Keyword of %s: %s", user.first_name, update.message.text)
+#     # Call function return list, iterate over list to printe single msg
+#     foundtorrents = pirate.CustomizedSearch(update.message.text, 104)
+#     for torrent in foundtorrents:
+#         await update.message.reply_text(torrent)
+
+#     await update.message.reply_text("Thank you! I hope we can talk again some day.")
+    
+#     return ConversationHandler.END
 
 
-async def choose(update: Update, context: ContextTypes.context, torrent) -> int:
+async def choose(update: Update, context: ContextTypes.context) -> int:
     user = update.message.from_user
     logger.info("Choose of %s is: %s", user.first_name, update.message.text)
     # Call function return list, iterate over list to printe single msg
     # foundtorrents = pirate.CustomizedSearch(update.message.text, 104)
     # for torrent in foundtorrents:
     #     await update.message.reply_text(torrent)
-    print(torrent)
     
-    await update.message.reply_text("Thank you! AAAAAAAAAAAAMMO I hope we can talk again some day.")
+    await update.message.reply_text(
+        "Thank you! AAAAAAAAAAAAMMO I hope we can talk again some day."
+        )
     
     return ConversationHandler.END
 
 
+#QUA non ci sono riusciuto
 # async def search(update: Update, context: ContextTypes.context) -> int:
 #     """Search the keyword and ends the conversation."""
 #     await update.message.reply_text(
