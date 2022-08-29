@@ -47,16 +47,16 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-CATEGORIES, KEYWORD, CHOOSE = range(3)
-
+CATEGORIES, KEYWORD, CHOOSE = range(3) 
+foundtorrents = []
 
 async def start(update: Update, context: ContextTypes.context) -> int:
     """Starts the conversation and asks the user about categories."""
     reply_keyboard = [["Music", "Movie", "Other"]]
 
     await update.message.reply_text(
-        "Hi! My name is Bot."
-        "Send /cancel and /start to stop and restart conversation with me."
+        "Hi! My name is Bot.\n"
+        "Send /cancel and /start to stop and restart conversation with me.\n"
         "Now please choose a category, or send /skip to go haead.\n\n",
         reply_markup=ReplyKeyboardMarkup(
             reply_keyboard, one_time_keyboard=True, input_field_placeholder="Send /skip to go haead."
@@ -75,7 +75,7 @@ async def skip_categories(update: Update, context: ContextTypes.context) -> int:
         reply_markup=ReplyKeyboardRemove(), 
     )
 
-    return CATEGORIES
+    return KEYWORD
 
 
 async def categories(update: Update, context: ContextTypes.context) -> int:
@@ -89,20 +89,25 @@ async def categories(update: Update, context: ContextTypes.context) -> int:
 
     return KEYWORD
 
-
+#CHOOSE
 async def keyword(update: Update, context: ContextTypes.context) -> int:
     """Stores the keyword to search and ends the conversation."""
     user = update.message.from_user
     logger.info("Keyword of %s is: %s", user.first_name, update.message.text)
     # Call function return list, iterate over list to printe single msg
     foundtorrents = pirate.CustomizedSearch(update.message.text, 104)
+    # Check if no torrents found
+    if (len(foundtorrents)) == 0:
+        await update.message.reply_text('No torrents found :(\nTry input a new keyword to search...')
+        return KEYWORD
+
+    await update.message.reply_text('There were {0} torrents found.'.format(len(foundtorrents)))
     for torrent in foundtorrents:
         await update.message.reply_text(torrent)
+        foundtorrents.append(torrent)
 
-    await update.message.reply_text(
-        "Ok! I'm done. Tell me wich one to download...", 
-        reply_markup=ReplyKeyboardRemove(),
-        )
+
+    await update.message.reply_text('Tell me wich one to download...', reply_markup=ReplyKeyboardRemove())
 
     return CHOOSE
 
@@ -114,6 +119,9 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
 #     logger.info("Keyword of %s: %s", user.first_name, update.message.text)
 #     # Call function return list, iterate over list to printe single msg
 #     foundtorrents = pirate.CustomizedSearch(update.message.text, 104)
+#     # Display Message
+#     await update.message.reply_text('There were {0} torrents found.'.format(len(foundtorrents)))
+
 #     for torrent in foundtorrents:
 #         await update.message.reply_text(torrent)
 
@@ -123,19 +131,17 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
 
 
 async def choose(update: Update, context: ContextTypes.context) -> int:
+    # def has_numbers(inputString):
+    #     return [char for char in inputString if char.isdigit()]
     user = update.message.from_user
     logger.info("Choose of %s is: %s", user.first_name, update.message.text)
-    # Call function return list, iterate over list to printe single msg
-    # foundtorrents = pirate.CustomizedSearch(update.message.text, 104)
-    # for torrent in foundtorrents:
-    #     await update.message.reply_text(torrent)
-    
+    print(update.message.text) #### < RISPOSTA DEL CLIENTE  
     await update.message.reply_text(
         "Thank you! AAAAAAAAAAAAMMO I hope we can talk again some day."
         )
-    
     return ConversationHandler.END
-    
+
+
 
 async def cancel(update: Update, context: ContextTypes.context) -> int:
     """Cancels and ends the conversation."""
@@ -155,6 +161,16 @@ def test():
     keyword = "nirvana"
     foundtorrents = pirate.CustomizedSearch(keyword, 104)
     return foundtorrents
+
+
+def test1(foundtorrents):
+    #categories = pirate.PrintCategories()
+    print("test1___________________")
+    print(foundtorrents)
+    # pirate.QuickSearch("pink floyd flac")
+    # keyword = "nirvana"
+    # foundtorrents = pirate.CustomizedSearch(keyword, 104)
+    # return foundtorrents
 
 
 def main() -> None:

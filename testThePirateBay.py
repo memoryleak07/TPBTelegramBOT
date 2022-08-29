@@ -45,15 +45,14 @@ class ThePirateBay:
         ## Customize your search
         #self.torrents = self.t.search('flac pink floyd 24bit', page=0, order=ORDERS.NAME.DES, category=CATEGORIES.AUDIO.FLAC)
         self.torrents = self.t.search(keyword, page=0, order=ORDERS.NAME.DES, category=categories)
-
         ## See how many torrents were found
         print('There were {0} torrents found.'.format(len(self.torrents)))
         # Iterate through list of torrents and print info for Torrent object
         i = 0
         foundtorrents = []
         for torrent in self.torrents:
-            print("[{i}]".format(i=i), torrent)
-            line ="[{i}] - {torrent}".format(i=i, torrent=torrent) 
+            print("[{i}]".format(i=i), torrent, torrent.magnetlink)
+            line ="[{i}] - {torrent};{magnetlink}".format(i=i, torrent=torrent, magnetlink=torrent.magnetlink) 
             foundtorrents.append(line)
             i = i +1
         return foundtorrents
