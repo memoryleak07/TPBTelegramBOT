@@ -16,10 +16,6 @@ bot.
 
 import logging
 from telegram import __version__ as TG_VER
-# Import my class from TPB
-from testThePirateBay import ThePirateBay 
-
-
 # try:
 #     from telegram import __version_info__
 # except ImportError:
@@ -40,13 +36,15 @@ from telegram.ext import (
     filters,
 )
 
+# Import my class from TPB
+from testThePirateBay import ThePirateBay 
+
+
 # Enable logging
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 logger = logging.getLogger(__name__)
-
-
 
 
 CATEGORIES, KEYWORD, CHOOSE = range(3)
@@ -57,12 +55,11 @@ async def start(update: Update, context: ContextTypes.context) -> int:
     reply_keyboard = [["Music", "Movie", "Other"]]
 
     await update.message.reply_text(
-        "Hi! My name is Bot. I will FATIC for you. "
-        "Send /start to start talking to me."
-        "Send /cancel to stop talking to me.\n\n"
-        "Now please choose a category\n\n",
+        "Hi! My name is Bot."
+        "Send /cancel and /start to stop and restart conversation with me."
+        "Now please choose a category, or send /skip to go haead.\n\n",
         reply_markup=ReplyKeyboardMarkup(
-            reply_keyboard, one_time_keyboard=True, input_field_placeholder="Select a category, or send /skip if you don't want to."
+            reply_keyboard, one_time_keyboard=True, input_field_placeholder="Send /skip to go haead."
         ),
     )
 
@@ -79,7 +76,6 @@ async def skip_categories(update: Update, context: ContextTypes.context) -> int:
     )
 
     return CATEGORIES
-
 
 
 async def categories(update: Update, context: ContextTypes.context) -> int:
@@ -110,7 +106,8 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
 
     return CHOOSE
 
-#funzionava prima di aggiungere CHOOSE!!!=
+
+#funzionava prima di aggiungere CHOOSE nel main!!!
 # async def keyword(update: Update, context: ContextTypes.context) -> int:
 #     """Stores the keyword to search and ends the conversation."""
 #     user = update.message.from_user
@@ -138,31 +135,7 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
         )
     
     return ConversationHandler.END
-
-
-#QUA non ci sono riusciuto
-# async def search(update: Update, context: ContextTypes.context) -> int:
-#     """Search the keyword and ends the conversation."""
-#     await update.message.reply_text(
-#             "Ok Fast! Now, input a keyword to search...",
-#             reply_markup=ReplyKeyboardRemove(),
-#         )
     
-#     await update.message.reply_to_message
-    
-#     user = update.message.from_user
-#     logger.info("SEARCH of %s: %s", user.first_name, update.message.text)
-#     # Call function return list, iterate over list to printe single msg
-#     foundtorrents = pirate.CustomizedSearch(update.message.text, 104)
-#     for torrent in foundtorrents:
-#         await update.message.reply_text(torrent)
-
-#     await update.message.reply_text("Thank you! I hope we can talk again some day.")
-    
-#     return KEYWORD
-
-    
-
 
 async def cancel(update: Update, context: ContextTypes.context) -> int:
     """Cancels and ends the conversation."""
@@ -182,7 +155,6 @@ def test():
     keyword = "nirvana"
     foundtorrents = pirate.CustomizedSearch(keyword, 104)
     return foundtorrents
-
 
 
 def main() -> None:
@@ -211,9 +183,6 @@ def main() -> None:
 
 
 
-
-
-    
 if __name__ == "__main__":
     # main()
     pirate = ThePirateBay()

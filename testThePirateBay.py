@@ -53,7 +53,7 @@ class ThePirateBay:
         foundtorrents = []
         for torrent in self.torrents:
             print("[{i}]".format(i=i), torrent)
-            line ="[{i}] - {torrent}%0A".format(i=i, torrent=torrent) 
+            line ="[{i}] - {torrent}".format(i=i, torrent=torrent) 
             foundtorrents.append(line)
             i = i +1
         return foundtorrents
