@@ -50,12 +50,14 @@ class ThePirateBay:
         # Iterate through list of torrents and print info for Torrent object
         i = 0
         foundtorrents = []
+        magnetlinks = []
         for torrent in self.torrents:
-            print("[{i}]".format(i=i), torrent, torrent.magnetlink)
-            line ="[{i}] - {torrent};{magnetlink}".format(i=i, torrent=torrent, magnetlink=torrent.magnetlink) 
+            print("[{i}]".format(i=i), torrent)
+            line ="[{i}] - {torrent}".format(i=i, torrent=torrent) 
             foundtorrents.append(line)
-            i = i +1
-        return foundtorrents
+            magnetlinks.append(torrent.magnetlink)
+            i = i+1
+        return foundtorrents, magnetlinks
 
 
     def FilterTorrent(self):

@@ -13,7 +13,7 @@ Send /start to initiate the conversation.
 Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
-
+import re
 import logging
 from telegram import __version__ as TG_VER
 # try:
@@ -39,16 +39,16 @@ from telegram.ext import (
 # Import my class from TPB
 from testThePirateBay import ThePirateBay 
 
-
 # Enable logging
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
-
 CATEGORIES, KEYWORD, CHOOSE = range(3) 
+
 foundtorrents = []
+magnetlinks = []
 
 async def start(update: Update, context: ContextTypes.context) -> int:
     """Starts the conversation and asks the user about categories."""
@@ -95,7 +95,7 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     user = update.message.from_user
     logger.info("Keyword of %s is: %s", user.first_name, update.message.text)
     # Call function return list, iterate over list to printe single msg
-    foundtorrents = pirate.CustomizedSearch(update.message.text, 104)
+    foundtorrents, magnetlinks = pirate.CustomizedSearch(update.message.text, 104)
     # Check if no torrents found
     if (len(foundtorrents)) == 0:
         await update.message.reply_text('No torrents found :(\nTry input a new keyword to search...')
@@ -104,10 +104,9 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     await update.message.reply_text('There were {0} torrents found.'.format(len(foundtorrents)))
     for torrent in foundtorrents:
         await update.message.reply_text(torrent)
-        foundtorrents.append(torrent)
 
 
-    await update.message.reply_text('Tell me wich one to download...', reply_markup=ReplyKeyboardRemove())
+    await update.message.reply_text('Select which to download...', reply_markup=ReplyKeyboardRemove())
 
     return CHOOSE
 
@@ -135,7 +134,24 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
     #     return [char for char in inputString if char.isdigit()]
     user = update.message.from_user
     logger.info("Choose of %s is: %s", user.first_name, update.message.text)
-    print(update.message.text) #### < RISPOSTA DEL CLIENTE  
+    # print(update.message.text) #### < RISPOSTA DEL CLIENTE  
+    # Conver user response in numeric list
+    res = re.findall(r'\d+', update.message.text)
+    if len(res) == 0:
+        await update.message.reply_text(
+            "Error ! Insert a valid integer input! Es. 0, 1, 10 \n"
+            "Select which to download...\n",
+            reply_markup=ReplyKeyboardRemove()
+        )
+
+        return CHOOSE
+
+    print(res)
+    
+    # for i in res: 
+    #     print(foundtorrents[1])
+
+
     await update.message.reply_text(
         "Thank you! AAAAAAAAAAAAMMO I hope we can talk again some day."
         )
