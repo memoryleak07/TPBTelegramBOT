@@ -150,8 +150,12 @@ async def confirm(update: Update, context: ContextTypes.context) -> int:
     """Ask confirm before start download."""
     print("CONFIRM STATE")
     print(globalvar)
+    reply_keyboard = [["YES", "NO"]]
     await update.message.reply_text(
-        "Thank you! AAAAAAAAAAAAMMO I hope we can talk again some day.", reply_markup=ReplyKeyboardRemove()
+        "Thank you! AAAAAAAAAAAAMMO I hope we can talk again some day.\n",
+        reply_markup=ReplyKeyboardMarkup(
+            reply_keyboard, one_time_keyboard=True, input_field_placeholder="Please confirm or deny"
+        ),
     )
 
     return ConversationHandler.END
