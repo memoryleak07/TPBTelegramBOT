@@ -45,11 +45,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-CATEGORIES, KEYWORD, CHOOSE = range(3)
+CATEGORIES, KEYWORD, CHOOSE, CONFIRM = range(4)
 
 foundtorrents = []
 magnetlinks = []
-globalvar = []
+globalvar = ["", "", ""]
 
 
 async def start(update: Update, context: ContextTypes.context) -> int:
@@ -115,7 +115,7 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
 
 
 async def choose(update: Update, context: ContextTypes.context) -> int:
-    """Select wich torrent download and ends the conversation."""
+    """Select wich torrent download and call CANFIRM"""
     user = update.message.from_user
     logger.info("Choose of %s is: %s", user.first_name, update.message.text)
     # print(update.message.text) #### < RISPOSTA DEL CLIENTE
@@ -128,12 +128,24 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
             "Select which to download...\n",
             reply_markup=ReplyKeyboardRemove()
         )
+        
         return CHOOSE
     # Else store the item to download in a list
     store_information("", "", res)
 
     await update.message.reply_text(
-        "Thank you! AAAAAAAAAAAAMMO I hope we can talk again some day."
+        "Please confitm the selected torrent: "
+    )
+
+    return CONFIRM
+
+
+async def confirm(update: Update, context: ContextTypes.context) -> int:
+    """Ask confirm before start download."""
+    print("CONFIRM STATE")
+    print(globalvar)
+    await update.message.reply_text(
+        "Thank you! AAAAAAAAAAAAMMO I hope we can talk again some day.", reply_markup=ReplyKeyboardRemove()
     )
 
     return ConversationHandler.END
@@ -150,23 +162,28 @@ async def cancel(update: Update, context: ContextTypes.context) -> int:
     return ConversationHandler.END
 
 
-def test():
-    #categories = pirate.PrintCategories()
-    # print(categories[6])
-    # pirate.QuickSearch("pink floyd flac")
-    keyword = "nirvana"
-    foundtorrents = pirate.CustomizedSearch(keyword, 104)
-    return foundtorrents
+# def test():
+#     #categories = pirate.PrintCategories()
+#     # print(categories[6])
+#     # pirate.QuickSearch("pink floyd flac")
+#     keyword = "nirvana"
+#     foundtorrents = pirate.CustomizedSearch(keyword, 104)
+#     return foundtorrents
 
 
 def store_information(foundtorrents, magnetlinks, select):
     """Store the conversation info as a global var list."""
     global globalvar
     if (foundtorrents != "") & (magnetlinks != ""):
-        globalvar.insert(0, foundtorrents)
-        globalvar.insert(1, magnetlinks)
+        globalvar[0] = foundtorrents
+        globalvar[1] = magnetlinks
     else:
-        globalvar.insert(2, select)
+        globalvar[2] = select
+    # if (foundtorrents != "") & (magnetlinks != ""):
+    #     globalvar.insert(0, foundtorrents)
+    #     globalvar.insert(1, magnetlinks)
+    # else:
+    #     globalvar.insert(2, select)
     # print(globalvar)
 
 
@@ -185,6 +202,7 @@ def main() -> None:
             ],
             KEYWORD: [MessageHandler(filters.TEXT & ~filters.COMMAND, keyword)],
             CHOOSE: [MessageHandler(filters.TEXT & ~filters.COMMAND, choose)],
+            CONFIRM: [MessageHandler(filters.TEXT & ~filters.COMMAND, confirm)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
