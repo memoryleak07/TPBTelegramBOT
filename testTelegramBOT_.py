@@ -132,9 +132,15 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
         return CHOOSE
     # Else store the item to download in a list
     store_information("", "", res)
+    
+    for i in res:
+        print(globalvar[0][int(i)])
+        await update.message.reply_text("{res}".format(res=globalvar[0][int(i)]))
+
+    #print(globalvar[0][int(res[0])])
 
     await update.message.reply_text(
-        "Please confitm the selected torrent: "
+        "Please confitm the selected torrent:\n"
     )
 
     return CONFIRM
