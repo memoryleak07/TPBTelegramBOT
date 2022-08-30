@@ -50,13 +50,15 @@ class ThePirateBay:
         i = 0
         foundtorrents = []
         magnetlinks = []
+        url = []
         for torrent in self.torrents:
-            print("[{i}]".format(i=i), torrent)
+            #print("[{i}]".format(i=i), torrent)
             line = "[{i}] - {torrent}".format(i=i, torrent=torrent)
             foundtorrents.append(line)
             magnetlinks.append(torrent.magnetlink)
+            url.append(torrent.url)
             i = i+1
-        return foundtorrents, magnetlinks
+        return foundtorrents, magnetlinks, url
 
     def FilterTorrent(self):
         # Get the most seeded torrent based on a filter

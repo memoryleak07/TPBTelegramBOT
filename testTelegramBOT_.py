@@ -13,9 +13,8 @@ Send /start to initiate the conversation.
 Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
-import re
-import logging
-from telegram import __version__ as TG_VER
+
+# from telegram import __version__ as TG_VER
 # try:
 #     from telegram import __version_info__
 # except ImportError:
@@ -26,6 +25,9 @@ from telegram import __version__ as TG_VER
 #         f"{TG_VER} version of this example, "
 #         f"visit https://docs.python-telegram-bot.org/en/v{TG_VER}/examples.html"
 #     )
+
+import re
+import logging
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (
     Application,
@@ -36,7 +38,7 @@ from telegram.ext import (
     filters,
 )
 
-# Import my class from TPB
+# Import my class
 from testThePirateBay import ThePirateBay
 
 # Enable logging
@@ -49,17 +51,17 @@ CATEGORIES, KEYWORD, CHOOSE, CONFIRM = range(4)
 
 foundtorrents = []
 magnetlinks = []
-globalvar = ["", "", ""]
+urls = []
+globalvar = ["", "", "", ""]
 
 
 async def start(update: Update, context: ContextTypes.context) -> int:
     """Starts the conversation and asks the user about categories."""
     reply_keyboard = [["Music", "Movie", "Other"]]
-
     await update.message.reply_text(
-        "Hi! My name is Bot.\n"
-        "Send /cancel and /start to stop and restart conversation with me.\n"
-        "Now please choose a category, or send /skip to go haead.\n\n",
+        "Hi! I'm Bot.\n"
+        "Please select a category or /skip.\n"
+        "Send /cancel /start to restart conversation.\n\n  ",
         reply_markup=ReplyKeyboardMarkup(
             reply_keyboard, one_time_keyboard=True, input_field_placeholder="Send /skip to go haead."
         ),
@@ -97,25 +99,34 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     user = update.message.from_user
     logger.info("Keyword of %s is: %s", user.first_name, update.message.text)
     # Call function return list, iterate over list to printe single msg
-    foundtorrents, magnetlinks = pirate.CustomizedSearch(
+    foundtorrents, magnetlinks, urls = pirate.CustomizedSearch(
         update.message.text, 104)
     # Check if no torrents found retunr KEYWORD state
     if (len(foundtorrents)) == 0:
-        await update.message.reply_text('No torrents found :(\nTry input a new keyword to search...')
+        logger.info("No torrents found :-(")
+        await update.message.reply_text(
+            'No torrents found :-(\nTry input a new keyword to search...'
+        )
+
         return KEYWORD
-    # Else store the info in globalvar
-    await update.message.reply_text('There were {0} torrents found.'.format(len(foundtorrents)))
+    # Else print and store the info in globalvar
+    logger.info("There were %s torrents found.", len(foundtorrents))
+    await update.message.reply_text(
+        'There were {0} torrents found.'.format(len(foundtorrents))
+    )
     for torrent in foundtorrents:
         await update.message.reply_text(torrent)
 
-    store_information(foundtorrents, magnetlinks, "")
-    await update.message.reply_text('Select which to download...', reply_markup=ReplyKeyboardRemove())
+    store_information(foundtorrents, magnetlinks, urls, "")
+    await update.message.reply_text('OK! Write wich want to download.', 
+        reply_markup=ReplyKeyboardRemove()
+    )
 
     return CHOOSE
 
 
 async def choose(update: Update, context: ContextTypes.context) -> int:
-    """Select wich torrent download and call CANFIRM"""
+    """Select wich torrent download and call canfirm action"""
     user = update.message.from_user
     logger.info("Choose of %s is: %s", user.first_name, update.message.text)
     # print(update.message.text) #### < RISPOSTA DEL CLIENTE
@@ -124,23 +135,26 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
     # Check the string if not valid return in CHOOSSE state
     if len(res) == 0:
         await update.message.reply_text(
-            "Error ! Insert a valid integer input! Es. 0, 1, 10 \n"
-            "Select which to download...\n",
+            "Error ! Insert a list of numbers! Es. 2 or 2, 9, 3...\n"
+            "Write wich want to download.",
             reply_markup=ReplyKeyboardRemove()
         )
         
         return CHOOSE
     # Else store the item to download in a list
-    store_information("", "", res)
+    store_information("", "", "", res)
     
     for i in res:
         print(globalvar[0][int(i)])
         await update.message.reply_text("{res}".format(res=globalvar[0][int(i)]))
 
     #print(globalvar[0][int(res[0])])
-
+    reply_keyboard = [["Yes", "No"]]
     await update.message.reply_text(
-        "Please confitm the selected torrent:\n"
+        "Please confirm the selected torrent:\n",
+        reply_markup=ReplyKeyboardMarkup(
+        reply_keyboard, one_time_keyboard=True, input_field_placeholder="Yes or No"
+        ),
     )
 
     return CONFIRM
@@ -148,14 +162,22 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
 
 async def confirm(update: Update, context: ContextTypes.context) -> int:
     """Ask confirm before start download."""
-    print("CONFIRM STATE")
-    print(globalvar)
-    reply_keyboard = [["YES", "NO"]]
+    user = update.message.from_user
+    logger.info("User %s selected: %s", user.first_name, update.message.text)
+    #aggiungere controllo regex
+    if update.message.text == "No":
+        await update.message.reply_text(
+            "Ok! Let's start again! Input a keyword to search...",
+            reply_markup=ReplyKeyboardRemove(),
+        )
+
+        return KEYWORD
+
+
     await update.message.reply_text(
-        "Thank you! AAAAAAAAAAAAMMO I hope we can talk again some day.\n",
-        reply_markup=ReplyKeyboardMarkup(
-            reply_keyboard, one_time_keyboard=True, input_field_placeholder="Please confirm or deny"
-        ),
+        "My job is done! I hope it was helpful.\n"
+        "Send /start to start over.\n\n ",
+        reply_markup=ReplyKeyboardRemove(),
     )
 
     return ConversationHandler.END
@@ -166,7 +188,9 @@ async def cancel(update: Update, context: ContextTypes.context) -> int:
     user = update.message.from_user
     logger.info("User %s canceled the conversation.", user.first_name)
     await update.message.reply_text(
-        "Bye! I hope we can talk again some day.", reply_markup=ReplyKeyboardRemove()
+        "Bye! I hope we can talk again some day."
+        "Send /start to start over.\n\n ",
+        reply_markup=ReplyKeyboardRemove()
     )
 
     return ConversationHandler.END
@@ -181,20 +205,16 @@ async def cancel(update: Update, context: ContextTypes.context) -> int:
 #     return foundtorrents
 
 
-def store_information(foundtorrents, magnetlinks, select):
+def store_information(foundtorrents, magnetlinks, urls, select):
     """Store the conversation info as a global var list."""
     global globalvar
-    if (foundtorrents != "") & (magnetlinks != ""):
+    if (foundtorrents != "") & (magnetlinks != "") & (urls != ""):
         globalvar[0] = foundtorrents
         globalvar[1] = magnetlinks
+        globalvar[2] = urls
     else:
-        globalvar[2] = select
-    # if (foundtorrents != "") & (magnetlinks != ""):
-    #     globalvar.insert(0, foundtorrents)
-    #     globalvar.insert(1, magnetlinks)
-    # else:
-    #     globalvar.insert(2, select)
-    # print(globalvar)
+        globalvar[3] = select
+
 
 
 def main() -> None:
