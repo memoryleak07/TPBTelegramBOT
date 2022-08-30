@@ -37,7 +37,7 @@ from telegram.ext import (
 )
 
 # Import my class from TPB
-from testThePirateBay import ThePirateBay 
+from testThePirateBay import ThePirateBay
 
 # Enable logging
 logging.basicConfig(
@@ -45,10 +45,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-CATEGORIES, KEYWORD, CHOOSE = range(3) 
+CATEGORIES, KEYWORD, CHOOSE = range(3)
 
 foundtorrents = []
 magnetlinks = []
+globalvar = []
+
 
 async def start(update: Update, context: ContextTypes.context) -> int:
     """Starts the conversation and asks the user about categories."""
@@ -72,7 +74,7 @@ async def skip_categories(update: Update, context: ContextTypes.context) -> int:
     logger.info("User %s did not set a category.", user.first_name)
     await update.message.reply_text(
         "Ok! Now, input a keyword to search...",
-        reply_markup=ReplyKeyboardRemove(), 
+        reply_markup=ReplyKeyboardRemove(),
     )
 
     return KEYWORD
@@ -89,74 +91,52 @@ async def categories(update: Update, context: ContextTypes.context) -> int:
 
     return KEYWORD
 
-#CHOOSE
+
 async def keyword(update: Update, context: ContextTypes.context) -> int:
     """Stores the keyword to search and ends the conversation."""
     user = update.message.from_user
     logger.info("Keyword of %s is: %s", user.first_name, update.message.text)
     # Call function return list, iterate over list to printe single msg
-    foundtorrents, magnetlinks = pirate.CustomizedSearch(update.message.text, 104)
-    # Check if no torrents found
+    foundtorrents, magnetlinks = pirate.CustomizedSearch(
+        update.message.text, 104)
+    # Check if no torrents found retunr KEYWORD state
     if (len(foundtorrents)) == 0:
         await update.message.reply_text('No torrents found :(\nTry input a new keyword to search...')
         return KEYWORD
-
+    # Else store the info in globalvar
     await update.message.reply_text('There were {0} torrents found.'.format(len(foundtorrents)))
     for torrent in foundtorrents:
         await update.message.reply_text(torrent)
 
-
+    store_information(foundtorrents, magnetlinks, "")
     await update.message.reply_text('Select which to download...', reply_markup=ReplyKeyboardRemove())
 
     return CHOOSE
 
 
-#funzionava prima di aggiungere CHOOSE nel main!!!
-# async def keyword(update: Update, context: ContextTypes.context) -> int:
-#     """Stores the keyword to search and ends the conversation."""
-#     user = update.message.from_user
-#     logger.info("Keyword of %s: %s", user.first_name, update.message.text)
-#     # Call function return list, iterate over list to printe single msg
-#     foundtorrents = pirate.CustomizedSearch(update.message.text, 104)
-#     # Display Message
-#     await update.message.reply_text('There were {0} torrents found.'.format(len(foundtorrents)))
-
-#     for torrent in foundtorrents:
-#         await update.message.reply_text(torrent)
-
-#     await update.message.reply_text("Thank you! I hope we can talk again some day.")
-    
-#     return ConversationHandler.END
-
-
 async def choose(update: Update, context: ContextTypes.context) -> int:
-    # def has_numbers(inputString):
-    #     return [char for char in inputString if char.isdigit()]
+    """Select wich torrent download and ends the conversation."""
     user = update.message.from_user
     logger.info("Choose of %s is: %s", user.first_name, update.message.text)
-    # print(update.message.text) #### < RISPOSTA DEL CLIENTE  
+    # print(update.message.text) #### < RISPOSTA DEL CLIENTE
     # Conver user response in numeric list
     res = re.findall(r'\d+', update.message.text)
+    # Check the string if not valid return in CHOOSSE state
     if len(res) == 0:
         await update.message.reply_text(
             "Error ! Insert a valid integer input! Es. 0, 1, 10 \n"
             "Select which to download...\n",
             reply_markup=ReplyKeyboardRemove()
         )
-
         return CHOOSE
-
-    print(res)
-    
-    # for i in res: 
-    #     print(foundtorrents[1])
-
+    # Else store the item to download in a list
+    store_information("", "", res)
 
     await update.message.reply_text(
         "Thank you! AAAAAAAAAAAAMMO I hope we can talk again some day."
-        )
-    return ConversationHandler.END
+    )
 
+    return ConversationHandler.END
 
 
 async def cancel(update: Update, context: ContextTypes.context) -> int:
@@ -179,14 +159,15 @@ def test():
     return foundtorrents
 
 
-def test1(foundtorrents):
-    #categories = pirate.PrintCategories()
-    print("test1___________________")
-    print(foundtorrents)
-    # pirate.QuickSearch("pink floyd flac")
-    # keyword = "nirvana"
-    # foundtorrents = pirate.CustomizedSearch(keyword, 104)
-    # return foundtorrents
+def store_information(foundtorrents, magnetlinks, select):
+    """Store the conversation info as a global var list."""
+    global globalvar
+    if (foundtorrents != "") & (magnetlinks != ""):
+        globalvar.insert(0, foundtorrents)
+        globalvar.insert(1, magnetlinks)
+    else:
+        globalvar.insert(2, select)
+    # print(globalvar)
 
 
 def main() -> None:
@@ -198,10 +179,10 @@ def main() -> None:
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
-            CATEGORIES:[
+            CATEGORIES: [
                 MessageHandler(filters.Regex("^(Music|Movie|Other)$"), categories),
                 CommandHandler("skip", skip_categories),
-                ],
+            ],
             KEYWORD: [MessageHandler(filters.TEXT & ~filters.COMMAND, keyword)],
             CHOOSE: [MessageHandler(filters.TEXT & ~filters.COMMAND, choose)],
         },
@@ -212,7 +193,6 @@ def main() -> None:
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling()
-
 
 
 if __name__ == "__main__":
