@@ -15,9 +15,12 @@ class Capturing(list):
 capt = Capturing()
 pirate =ThePirateBay()
 
-with Capturing() as output:
-    pirate.GetCategories()
+#print(pirate.GetCategories())
 
-print(output)
+page = 0
+
+foundtorrents, magnetlinks, urls = pirate.CustomizedSearch("nirvana", 100)
+print(foundtorrents)
+
 # allcategories = pirate.PrintCategories()
 # print(allcategories)

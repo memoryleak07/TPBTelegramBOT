@@ -28,6 +28,7 @@ bot.
 
 from html.parser import HTMLParser
 import re
+import time
 import logging
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import (
@@ -101,8 +102,8 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     user = update.message.from_user
     logger.info("User %s keyword is: %s", user.first_name, update.message.text)
     # Call function return list, iterate over list to printe single msg
-    foundtorrents, magnetlinks, urls = pirate.CustomizedSearch(
-        update.message.text, 104)
+
+    foundtorrents, magnetlinks, urls = pirate.CustomizedSearch(update.message.text, 104)
     # Check if no torrents found retunr KEYWORD state
     if (len(foundtorrents)) == 0:
         logger.info("No torrents found :-(")
@@ -116,8 +117,31 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     await update.message.reply_text(
         'There were {0} torrents found.'.format(len(foundtorrents))
     )
+    # Reply to user all link found, 30 each step
+    # offset = 0
+    # limit = 10
+    # inline_button = [[
+    #     InlineKeyboardButton(text="Continue", switch_inline_query_current_chat="Continue"),
+    #     InlineKeyboardButton(text="Stop", switch_inline_query_current_chat="Stop"),
+    # ]]
+
+    # reply = InlineKeyboardMarkup(inline_keyboard=inline_button)
     for torrent in foundtorrents:
-        await update.message.reply_text(torrent)
+       await update.message.reply_text(torrent)
+        # offset += 1
+        # if offset == limit:
+        #     await update.message.reply_text(text="Continue?:\n", reply_markup=reply)
+        #     time.sleep(10)
+        #     user = update.message.from_user
+        #     logger.info("User %s selected: %s", user.first_name, update.message.text)
+        #     #aggiungere controllo regex
+        #     if update.message.text == "@noncapiscocosastasuccedendobot Stop":
+        #         break
+        #     limit += 30
+
+    # for foundtorrents in range(1, limit):
+    #     await update.message.reply_text(foundtorrents)
+
 
     store_information(foundtorrents, magnetlinks, urls, "")
     await update.message.reply_text('OK! Write wich want to download.', 
