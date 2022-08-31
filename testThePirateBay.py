@@ -1,25 +1,44 @@
 from tpblite import TPB
 from tpblite import CATEGORIES, ORDERS
+from io import StringIO 
+import sys
 
 
 class ThePirateBay:
 
+    class Capturing(list):
+
+        def __enter__(self):
+            self._stdout = sys.stdout
+            sys.stdout = self._stringio = StringIO()
+            return self
+        def __exit__(self, *args):
+            self.extend(self._stringio.getvalue().splitlines())
+            del self._stringio    # free up some memory
+            sys.stdout = self._stdout
+
+
     def __init__(self) -> None:
+        self.capture = ThePirateBay.Capturing()
         # Create a TPB object with a domain name
         # t = TPB('https://tpb.party')
 
         # Or create a TPB object with default domain
         self.t = TPB()
+        
 
-    def PrintCategories(self):
+
+    def GetCategories(self):
         ## To print all available categories, use the classmethod printOptions
-        #CATEGORIES.printOptions()
-        return CATEGORIES.printOptions()
+        with self.Capturing() as output:
+            CATEGORIES.printOptions()
+        return output
 
+
+    def GetSubCategories(self, category):
         ## Or just a subset of categories, like VIDEO
         #CATEGORIES.VIDEO.printOptions()
-        ## Similarly for the sort order
-        # ORDERS.printOptions()
+        pass
 
     def PrintResults(self):
         ## See how many torrents were found
@@ -33,20 +52,20 @@ class ThePirateBay:
             i = i + 1
         return foundtorrent
 
+
     def QuickSearch(self, keyword: str):
         ## Quick search for torrents, returns a Torrents object
         self.torrents = self.t.search(keyword)
         self.PrintResults()
 
+
     def CustomizedSearch(self, keyword: str, categories: int):
-        #print("keyword is", keyword)
         ## Customize your search
-        #self.torrents = self.t.search('flac pink floyd 24bit', page=0, order=ORDERS.NAME.DES, category=CATEGORIES.AUDIO.FLAC)
+        # Iterate through list of torrents and print info for Torrent object
         self.torrents = self.t.search(
             keyword, page=0, order=ORDERS.NAME.DES, category=categories)
         ## See how many torrents were found
         #print('There were {0} torrents found.'.format(len(self.torrents)))
-        # Iterate through list of torrents and print info for Torrent object
         i = 0
         foundtorrents = []
         magnetlinks = []
@@ -60,10 +79,12 @@ class ThePirateBay:
             i = i+1
         return foundtorrents, magnetlinks, url
 
+
     def FilterTorrent(self):
         # Get the most seeded torrent based on a filter
         torrent = self.torrents.getBestTorrent(
-            min_seeds=30, min_filesize='500 MiB', max_filesize='20 GiB')
+        min_seeds=30, min_filesize='500 MiB', max_filesize='20 GiB')
+
 
     def SelectTorrent(self, num: int):
         # Or select a particular torrent by indexing

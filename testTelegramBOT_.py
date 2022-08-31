@@ -26,9 +26,10 @@ bot.
 #         f"visit https://docs.python-telegram-bot.org/en/v{TG_VER}/examples.html"
 #     )
 
+from html.parser import HTMLParser
 import re
 import logging
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -53,6 +54,7 @@ foundtorrents = []
 magnetlinks = []
 urls = []
 globalvar = ["", "", "", ""]
+
 
 
 async def start(update: Update, context: ContextTypes.context) -> int:
@@ -97,7 +99,7 @@ async def categories(update: Update, context: ContextTypes.context) -> int:
 async def keyword(update: Update, context: ContextTypes.context) -> int:
     """Stores the keyword to search and ends the conversation."""
     user = update.message.from_user
-    logger.info("Keyword of %s is: %s", user.first_name, update.message.text)
+    logger.info("User %s keyword is: %s", user.first_name, update.message.text)
     # Call function return list, iterate over list to printe single msg
     foundtorrents, magnetlinks, urls = pirate.CustomizedSearch(
         update.message.text, 104)
@@ -128,7 +130,7 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
 async def choose(update: Update, context: ContextTypes.context) -> int:
     """Select wich torrent download and call canfirm action"""
     user = update.message.from_user
-    logger.info("Choose of %s is: %s", user.first_name, update.message.text)
+    logger.info("User %s choose: %s", user.first_name, update.message.text)
     # print(update.message.text) #### < RISPOSTA DEL CLIENTE
     # Conver user response in numeric list
     res = re.findall(r'\d+', update.message.text)
@@ -145,17 +147,25 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
     store_information("", "", "", res)
     
     for i in res:
-        print(globalvar[0][int(i)])
-        await update.message.reply_text("{res}".format(res=globalvar[0][int(i)]))
+        print("{res} - {url}".format(res=globalvar[0][int(i)], url= globalvar[2][int(i)]))
+        await update.message.reply_text(
+            "{res} - {url}".format(res=globalvar[0][int(i)], url= globalvar[2][int(i)]),
+        )
 
-    #print(globalvar[0][int(res[0])])
-    reply_keyboard = [["Yes", "No"]]
-    await update.message.reply_text(
-        "Please confirm the selected torrent:\n",
-        reply_markup=ReplyKeyboardMarkup(
-        reply_keyboard, one_time_keyboard=True, input_field_placeholder="Yes or No"
-        ),
-    )
+
+    inline_button = [[
+        InlineKeyboardButton(text="Yes", switch_inline_query_current_chat="Yes"),
+        InlineKeyboardButton(text="No", switch_inline_query_current_chat="No"),
+    ]]
+    reply = InlineKeyboardMarkup(inline_keyboard=inline_button)
+    #reply_keyboard = [["Yes", "No"]]
+    # await update.message.reply_text(
+    #     "Please confirm the selected torrent:\n",
+    #     reply_markup=ReplyKeyboardMarkup(
+    #     reply_keyboard, one_time_keyboard=True, input_field_placeholder="Yes or No"
+    #     ),
+    # )
+    await update.message.reply_text(text="Please confirm the selected torrent:\n", reply_markup=reply)
 
     return CONFIRM
 
@@ -165,13 +175,29 @@ async def confirm(update: Update, context: ContextTypes.context) -> int:
     user = update.message.from_user
     logger.info("User %s selected: %s", user.first_name, update.message.text)
     #aggiungere controllo regex
-    if update.message.text == "No":
+    if update.message.text == "@noncapiscocosastasuccedendobot No":
         await update.message.reply_text(
             "Ok! Let's start again! Input a keyword to search...",
             reply_markup=ReplyKeyboardRemove(),
         )
 
         return KEYWORD
+# async def confirm(update: Update, context: ContextTypes.context) -> int:
+#     """Ask confirm before start download."""
+#     user = update.message.from_user
+#     logger.info("User %s selected: %s", user.first_name, update.message.text)
+#     #aggiungere controllo regex
+#     if update.message.text == "No":
+#         await update.message.reply_text(
+#             "Ok! Let's start again! Input a keyword to search...",
+#             reply_markup=ReplyKeyboardRemove(),
+#         )
+
+#         return KEYWORD
+
+    # for i in globalvar[3]:
+    #     print(globalvar[0][int(i)], " - ", globalvar[2][int(i)])
+    #     #await update.message.reply_text("{res}".format(res=globalvar[0][int(i)]))
 
 
     await update.message.reply_text(
