@@ -28,8 +28,9 @@ bot.
 
 from html.parser import HTMLParser
 import re
+import time
 import logging
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, InlineKeyboardMarkup, InlineKeyboardButton, ForceReply
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -101,30 +102,113 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     user = update.message.from_user
     logger.info("User %s keyword is: %s", user.first_name, update.message.text)
     # Call function return list, iterate over list to printe single msg
-    foundtorrents, magnetlinks, urls = pirate.CustomizedSearch(
-        update.message.text, 104)
+
+    offset = 1
+    search = update.message.text
+    if search == '@noncapiscocosastasuccedendobot Stop':
+        await update.message.reply_text('OK! Write wich want to download.', 
+        reply_markup=ReplyKeyboardRemove()
+        )
+        return CHOOSE
+    try:
+        search = update.message.text.split('-')[1]
+        offset = int(update.message.text.split('-')[2])
+    except Exception as ex:
+        offset = 1
+
+    foundtorrents, magnetlinks, urls = pirate.CustomizedSearch(search, offset, 104)
+    store_information(foundtorrents, magnetlinks, urls, "")
+
     # Check if no torrents found retunr KEYWORD state
     if (len(foundtorrents)) == 0:
-        logger.info("No torrents found :-(")
-        await update.message.reply_text(
-            'No torrents found :-(\nTry input a new keyword to search...'
-        )
-
-        return KEYWORD
+        if offset == 1:
+            logger.info("No torrents found :-(")
+            await update.message.reply_text(
+                'No torrents found :-(\nTry input a new keyword to search...'
+            )
+            return KEYWORD
+        return CHOOSE
+            
     # Else print and store the info in globalvar
     logger.info("There were %s torrents found.", len(foundtorrents))
     await update.message.reply_text(
         'There were {0} torrents found.'.format(len(foundtorrents))
     )
+    # Reply to user all link found, 30 each step
+    yesText = "Continue-{search}-{offset}".format(search=search,offset=str(offset+1))
+    inline_button = [[
+        InlineKeyboardButton(text="Continue", switch_inline_query_current_chat=yesText),
+        InlineKeyboardButton(text="Stop", switch_inline_query_current_chat="Stop"),
+    ]]
+    reply = InlineKeyboardMarkup(inline_keyboard=inline_button)
+
+    # chunk_size = 30
+    # chunked_list = [globalvar[0][i:i+chunk_size] for i in range(0, len(globalvar[0]), chunk_size)]
+    # Reply result
     for torrent in foundtorrents:
         await update.message.reply_text(torrent)
 
-    store_information(foundtorrents, magnetlinks, urls, "")
-    await update.message.reply_text('OK! Write wich want to download.', 
+    if (len(foundtorrents)) < 30:
+        await update.message.reply_text('OK! Write wich want to download.', 
         reply_markup=ReplyKeyboardRemove()
-    )
+        )
+        return CHOOSE
+        # offset += 1
+        # if offset == limit:
+        #     await update.message.reply_text(text="Vuoi continuare????:\n", reply_markup=reply) 
+        #     ask =  await stop_continue(update, context)
+        #     if ask == "@noncapiscocosastasuccedendobot Stop":
+        #         break
+        #     elif ask == "@noncapiscocosastasuccedendobot Continue":
+        #         print("continue")
+        #         limit += 30
 
-    return CHOOSE
+    # print(chunked_list)
+
+    # for torrent in foundtorrents[:current, :current+limit]:
+    # for index in range(current, current+limit):
+    #     await update.message.reply_text(foundtorrents[index])
+        # offset += 1
+        # if offset < maxoffset:
+        #     await update.message.reply_text(text="Continue?:\n", reply_markup=reply)
+        #     ask = await stop_continue(update, context)
+        #     if ask == "@noncapiscocosastasuccedendobot Stop":
+        #         # return CHOOSE
+        #         break
+        #     elif ask == "@noncapiscocosastasuccedendobot Continue":
+        #         limit += 5
+        #         current = limit
+        #     offset += 1
+        # break
+        # if offset == limit:
+        #     await update.message.reply_text(text="Continue?:\n", reply_markup=reply)
+        #     time.sleep(10)
+        #     user = update.message.from_user
+        #     logger.info("User %s selected: %s", user.first_name, update.message.text)
+        #     #aggiungere controllo regex
+        #     if update.message.text == "@noncapiscocosastasuccedendobot Stop":
+        #         break
+        #     limit += 30
+
+    # for foundtorrents in range(1, limit):
+    #     await update.message.reply_text(foundtorrents)
+
+
+
+    # await update.message.reply_text('OK! Write wich want to download.', 
+    #     reply_markup=ReplyKeyboardRemove()
+    # )
+    await update.message.reply_text(text="Vuoi continuare????:\n", reply_markup=reply) 
+
+    # return CHOOSE
+    return KEYWORD
+
+
+async def stop_continue(update: Update, context: ContextTypes.context) -> int:
+    """Ask confirm before start download."""
+    user = update.message.from_user
+    logger.info("User %s selected: %s", user.first_name, update.message.text)
+    return update.message.text
 
 
 async def choose(update: Update, context: ContextTypes.context) -> int:
@@ -147,11 +231,13 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
     store_information("", "", "", res)
     
     for i in res:
-        print("{res} - {url}".format(res=globalvar[0][int(i)], url= globalvar[2][int(i)]))
-        await update.message.reply_text(
-            "{res} - {url}".format(res=globalvar[0][int(i)], url= globalvar[2][int(i)]),
-        )
-
+        try:
+            print("{res} - {url}".format(res=globalvar[0][int(i)], url= globalvar[2][int(i)]))
+            await update.message.reply_text(
+                "{res} - {url}".format(res=globalvar[0][int(i)], url= globalvar[2][int(i)]),
+            )
+        except Exception as ex:
+            await update.message.reply_text(str(ex))
 
     inline_button = [[
         InlineKeyboardButton(text="Yes", switch_inline_query_current_chat="Yes"),
