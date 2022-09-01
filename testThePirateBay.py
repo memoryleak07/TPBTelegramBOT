@@ -82,7 +82,7 @@ class ThePirateBay:
 
     def FilterTorrent(self):
         # Get the most seeded torrent based on a filter
-        torrent = self.torrents.getBestTorrent(
+        self.torrent = self.torrents.getBestTorrent(
         min_seeds=30, min_filesize='500 MiB', max_filesize='20 GiB')
 
 
