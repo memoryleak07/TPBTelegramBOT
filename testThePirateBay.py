@@ -5,9 +5,9 @@ import sys
 
 
 class ThePirateBay:
-
+    # To capture the print output
     class Capturing(list):
-
+    
         def __enter__(self):
             self._stdout = sys.stdout
             sys.stdout = self._stringio = StringIO()
@@ -19,7 +19,6 @@ class ThePirateBay:
 
 
     def __init__(self) -> None:
-        self.capture = ThePirateBay.Capturing()
         # Create a TPB object with a domain name
         # t = TPB('https://tpb.party')
 
@@ -27,23 +26,21 @@ class ThePirateBay:
         self.t = TPB()
         
 
-
-    def GetCategories(self):
-        ## To print all available categories, use the classmethod printOptions
-        # with self.Capturing() as output:
-        CATEGORIES.printOptions()
-
-    def GetCategories1(self):
+    def GetAllCategories(self):
         ## To print all available categories, use the classmethod printOptions
         with self.Capturing() as output:
             CATEGORIES.printOptions()
         return output
 
 
+
     def GetSubCategories(self, category):
         ## Or just a subset of categories, like VIDEO
         #CATEGORIES.VIDEO.printOptions()
-        pass
+        with self.Capturing() as output:
+            CATEGORIES.VIDEO.printOptions()
+        return output
+
 
     def PrintResults(self):
         ## See how many torrents were found
@@ -66,10 +63,8 @@ class ThePirateBay:
 
     def CustomizedSearch(self, keyword:str, page:int, categories:int):
         ## Customize your search
-        # Iterate through list of torrents and print info for Torrent object
         #self.torrents = self.t.search(keyword, page=page, order=ORDERS.NAME.DES, category=categories)
         ## See how many torrents were found
-        #print('There were {0} torrents found.'.format(len(self.torrents)))
         
         foundtorrents = []
         magnetlinks = []
@@ -87,21 +82,8 @@ class ThePirateBay:
             foundtorrents.append(line)
             magnetlinks.append(torrent.magnetlink)
             url.append(torrent.url)
-            i = i+1            
+            i = i+1
         
-        # while True:
-        #     self.torrents = self.t.search(keyword, page=page, order=ORDERS.NAME.DES, category=categories)
-        #     if len(self.torrents) == 0:
-        #         break
-        #     for torrent in self.torrents:
-        #         #print("[{i}]".format(i=i), torrent)
-        #         line = "[{i}] - {torrent}".format(i=i, torrent=torrent)
-        #         foundtorrents.append(line)
-        #         magnetlinks.append(torrent.magnetlink)
-        #         url.append(torrent.url)
-        #         i = i+1
-        #     page = page + 1
-
         return foundtorrents, magnetlinks, url
 
     # def CustomizedSearch(self, keyword: str, categories: int):
@@ -133,12 +115,3 @@ class ThePirateBay:
     def SelectTorrent(self, num: int):
         # Or select a particular torrent by indexing
         torrent = self.torrents[num]
-
-
-
-    # # Get the magnet link for a torrent
-    # print(torrent.magnetlink)
-
-    # Get the url link for a torrent
-    # print(torrent.url)
-

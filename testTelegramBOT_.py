@@ -57,20 +57,45 @@ urls = []
 globalvar = ["", "", "", ""]
 
 
-
 async def start(update: Update, context: ContextTypes.context) -> int:
     """Starts the conversation and asks the user about categories."""
-    reply_keyboard = [["Music", "Movie", "Other"]]
-    await update.message.reply_text(
-        "Hi! I'm Bot.\n"
-        "Please select a category or /skip.\n"
-        "Send /cancel /start to restart conversation.\n\n  ",
-        reply_markup=ReplyKeyboardMarkup(
-            reply_keyboard, one_time_keyboard=True, input_field_placeholder="Send /skip to go haead."
-        ),
-    )
+    allcategories = pirate.GetAllCategories()
+    inline_button = []
+
+    for i in allcategories:
+        inline_button.append([InlineKeyboardButton(text=i, switch_inline_query_current_chat=i)])
+        # inline_button = InlineKeyboardButton(text={i}, switch_inline_query_current_chat={i})
+    print(inline_button)
+    # reply = InlineKeyboardMarkup(inline_keyboard=inline_button)
+    reply = InlineKeyboardMarkup(inline_keyboard=inline_button)
+
+    await update.message.reply_text(text="List of all categories: ", reply_markup=reply)
+
+
+    # reply_keyboard = [["Music", "Movie", "Other"]]
+    # await update.message.reply_text(
+    #     "Hi! I'm Bot.\n"
+    #     "Please select a category or /skip.\n"
+    #     "Send /cancel /start to restart conversation.\n\n  ",
+    #     reply_markup=ReplyKeyboardMarkup(
+    #         reply_keyboard, one_time_keyboard=True, input_field_placeholder="Send /skip to go haead."
+    #     ),
+    # )
 
     return CATEGORIES
+# async def start(update: Update, context: ContextTypes.context) -> int:
+#     """Starts the conversation and asks the user about categories."""
+#     reply_keyboard = [["Music", "Movie", "Other"]]
+#     await update.message.reply_text(
+#         "Hi! I'm Bot.\n"
+#         "Please select a category or /skip.\n"
+#         "Send /cancel /start to restart conversation.\n\n  ",
+#         reply_markup=ReplyKeyboardMarkup(
+#             reply_keyboard, one_time_keyboard=True, input_field_placeholder="Send /skip to go haead."
+#         ),
+#     )
+
+#     return CATEGORIES
 
 
 async def skip_categories(update: Update, context: ContextTypes.context) -> int:
@@ -101,7 +126,6 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     """Stores the keyword to search and ends the conversation."""
     user = update.message.from_user
     logger.info("User %s keyword is: %s", user.first_name, update.message.text)
-    # Call function return list, iterate over list to printe single msg
 
     offset = 1
     search = update.message.text
@@ -113,9 +137,10 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     try:
         search = update.message.text.split('-')[1]
         offset = int(update.message.text.split('-')[2])
-    except Exception as ex:
+    except Exception:
         offset = 1
 
+    # 
     foundtorrents, magnetlinks, urls = pirate.CustomizedSearch(search, offset, 104)
     store_information(foundtorrents, magnetlinks, urls, "")
 
@@ -153,54 +178,9 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
         reply_markup=ReplyKeyboardRemove()
         )
         return CHOOSE
-        # offset += 1
-        # if offset == limit:
-        #     await update.message.reply_text(text="Vuoi continuare????:\n", reply_markup=reply) 
-        #     ask =  await stop_continue(update, context)
-        #     if ask == "@noncapiscocosastasuccedendobot Stop":
-        #         break
-        #     elif ask == "@noncapiscocosastasuccedendobot Continue":
-        #         print("continue")
-        #         limit += 30
 
-    # print(chunked_list)
-
-    # for torrent in foundtorrents[:current, :current+limit]:
-    # for index in range(current, current+limit):
-    #     await update.message.reply_text(foundtorrents[index])
-        # offset += 1
-        # if offset < maxoffset:
-        #     await update.message.reply_text(text="Continue?:\n", reply_markup=reply)
-        #     ask = await stop_continue(update, context)
-        #     if ask == "@noncapiscocosastasuccedendobot Stop":
-        #         # return CHOOSE
-        #         break
-        #     elif ask == "@noncapiscocosastasuccedendobot Continue":
-        #         limit += 5
-        #         current = limit
-        #     offset += 1
-        # break
-        # if offset == limit:
-        #     await update.message.reply_text(text="Continue?:\n", reply_markup=reply)
-        #     time.sleep(10)
-        #     user = update.message.from_user
-        #     logger.info("User %s selected: %s", user.first_name, update.message.text)
-        #     #aggiungere controllo regex
-        #     if update.message.text == "@noncapiscocosastasuccedendobot Stop":
-        #         break
-        #     limit += 30
-
-    # for foundtorrents in range(1, limit):
-    #     await update.message.reply_text(foundtorrents)
-
-
-
-    # await update.message.reply_text('OK! Write wich want to download.', 
-    #     reply_markup=ReplyKeyboardRemove()
-    # )
     await update.message.reply_text(text="Vuoi continuare????:\n", reply_markup=reply) 
 
-    # return CHOOSE
     return KEYWORD
 
 
@@ -268,22 +248,6 @@ async def confirm(update: Update, context: ContextTypes.context) -> int:
         )
 
         return KEYWORD
-# async def confirm(update: Update, context: ContextTypes.context) -> int:
-#     """Ask confirm before start download."""
-#     user = update.message.from_user
-#     logger.info("User %s selected: %s", user.first_name, update.message.text)
-#     #aggiungere controllo regex
-#     if update.message.text == "No":
-#         await update.message.reply_text(
-#             "Ok! Let's start again! Input a keyword to search...",
-#             reply_markup=ReplyKeyboardRemove(),
-#         )
-
-#         return KEYWORD
-
-    # for i in globalvar[3]:
-    #     print(globalvar[0][int(i)], " - ", globalvar[2][int(i)])
-    #     #await update.message.reply_text("{res}".format(res=globalvar[0][int(i)]))
 
 
     await update.message.reply_text(
