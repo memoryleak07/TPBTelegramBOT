@@ -28,6 +28,7 @@ bot.
 
 from html.parser import HTMLParser
 import re
+from sqlite3 import Row
 import time
 import logging
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, InlineKeyboardMarkup, InlineKeyboardButton, ForceReply
@@ -56,50 +57,67 @@ magnetlinks = []
 urls = []
 globalvar = ["", "", "", ""]
 
-
-async def start(update: Update, context: ContextTypes.context) -> int:
-    """Starts the conversation and asks the user about categories."""
-    allcategories = pirate.GetAllCategories()
-    inline_button = []
-
-    for i in allcategories:
-        inline_button.append([InlineKeyboardButton(text=i, switch_inline_query_current_chat=i)])
-        # inline_button = InlineKeyboardButton(text={i}, switch_inline_query_current_chat={i})
-    print(inline_button)
-    # reply = InlineKeyboardMarkup(inline_keyboard=inline_button)
-    reply = InlineKeyboardMarkup(inline_keyboard=inline_button)
-
-    await update.message.reply_text(text="List of all categories: ", reply_markup=reply)
-
-
-    # reply_keyboard = [["Music", "Movie", "Other"]]
-    # await update.message.reply_text(
-    #     "Hi! I'm Bot.\n"
-    #     "Please select a category or /skip.\n"
-    #     "Send /cancel /start to restart conversation.\n\n  ",
-    #     reply_markup=ReplyKeyboardMarkup(
-    #         reply_keyboard, one_time_keyboard=True, input_field_placeholder="Send /skip to go haead."
-    #     ),
-    # )
-
-    return CATEGORIES
+# NON FUNZIONA IL PASSAGGIO A CATEGORIES
 # async def start(update: Update, context: ContextTypes.context) -> int:
 #     """Starts the conversation and asks the user about categories."""
-#     reply_keyboard = [["Music", "Movie", "Other"]]
-#     await update.message.reply_text(
-#         "Hi! I'm Bot.\n"
-#         "Please select a category or /skip.\n"
-#         "Send /cancel /start to restart conversation.\n\n  ",
-#         reply_markup=ReplyKeyboardMarkup(
-#             reply_keyboard, one_time_keyboard=True, input_field_placeholder="Send /skip to go haead."
-#         ),
-#     )
+#     logger.info("START state")
+#     allcategories = pirate.GetAllCategories()
+#     inline_button = []
+
+#     for i in allcategories:
+#         inline_button.append([InlineKeyboardButton(text=i, switch_inline_query_current_chat=i)])
+#     reply = InlineKeyboardMarkup(inline_keyboard=inline_button)
+
+#     await update.message.reply_text("Select a category:", reply_markup=reply)
 
 #     return CATEGORIES
 
+#OK:
+async def start(update: Update, context: ContextTypes.context) -> int:
+    """Starts the conversation and asks the user about categories."""
+    global globalvar
+    del globalvar
+    globalvar = ["", "", "", ""]
+    logger.info("START state")
+    reply_keyboard = [["Music", "Movie", "Other"]]
+    await update.message.reply_text(
+        "Hi! I'm Bot.\n"
+        "Please select a category or /skip.\n"
+        "Send /cancel /start to restart conversation.\n\n  ",
+        reply_markup=ReplyKeyboardMarkup(
+            reply_keyboard, one_time_keyboard=True, input_field_placeholder="Send /skip to go haead."
+        ),
+    )
+
+    return CATEGORIES
+
+
+async def categories(update: Update, context: ContextTypes.context) -> int:
+    """Stores the selected categories and asks for keyword."""
+    logger.info("CATEGORIES state")
+    user = update.message.from_user
+    logger.info("Category of %s: %s", user.first_name, update.message.text)
+    await update.message.reply_text(
+        "I see! Now, input a keyword to search...",
+        reply_markup=ReplyKeyboardRemove(),
+    )
+
+    return KEYWORD
+# async def categories(update: Update, context: ContextTypes.context) -> int:
+#     """Stores the selected categories and asks for keyword."""
+#     logger.info("CATEGORIES state")
+#     user = update.message.from_user
+#     logger.info("Category of %s: %s", user.first_name, update.message.text)
+#     await update.message.reply_text(
+#         "I see! Now, input a keyword to search...",
+#         reply_markup=ReplyKeyboardRemove(),
+#     )
+
+#     return KEYWORD
 
 async def skip_categories(update: Update, context: ContextTypes.context) -> int:
     """Skips the categories and asks for keyword."""
+    logger.info("SKIP state")
     user = update.message.from_user
     logger.info("User %s did not set a category.", user.first_name)
     await update.message.reply_text(
@@ -110,27 +128,16 @@ async def skip_categories(update: Update, context: ContextTypes.context) -> int:
     return KEYWORD
 
 
-async def categories(update: Update, context: ContextTypes.context) -> int:
-    """Stores the selected categories and asks for keyword."""
-    user = update.message.from_user
-    logger.info("Category of %s: %s", user.first_name, update.message.text)
-    await update.message.reply_text(
-        "I see! Now, input a keyword to search...",
-        reply_markup=ReplyKeyboardRemove(),
-    )
-
-    return KEYWORD
-
-
 async def keyword(update: Update, context: ContextTypes.context) -> int:
     """Stores the keyword to search and ends the conversation."""
+    logger.info("KEYWORD state")
     user = update.message.from_user
     logger.info("User %s keyword is: %s", user.first_name, update.message.text)
 
     offset = 1
     search = update.message.text
     if search == '@noncapiscocosastasuccedendobot Stop':
-        await update.message.reply_text('OK! Write wich want to download.', 
+        await update.message.reply_text("OK! Write wich want to download.",
         reply_markup=ReplyKeyboardRemove()
         )
         return CHOOSE
@@ -140,7 +147,7 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     except Exception:
         offset = 1
 
-    # 
+    #
     foundtorrents, magnetlinks, urls = pirate.CustomizedSearch(search, offset, 104)
     store_information(foundtorrents, magnetlinks, urls, "")
 
@@ -149,15 +156,15 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
         if offset == 1:
             logger.info("No torrents found :-(")
             await update.message.reply_text(
-                'No torrents found :-(\nTry input a new keyword to search...'
+                "No torrents found :-(\nTry input a new keyword to search..."
             )
             return KEYWORD
         return CHOOSE
-            
+
     # Else print and store the info in globalvar
     logger.info("There were %s torrents found.", len(foundtorrents))
     await update.message.reply_text(
-        'There were {0} torrents found.'.format(len(foundtorrents))
+        "There were {0} torrents found.".format(len(foundtorrents))
     )
     # Reply to user all link found, 30 each step
     yesText = "Continue-{search}-{offset}".format(search=search,offset=str(offset+1))
@@ -174,25 +181,19 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
         await update.message.reply_text(torrent)
 
     if (len(foundtorrents)) < 30:
-        await update.message.reply_text('OK! Write wich want to download.', 
+        await update.message.reply_text("OK! Write wich want to download.",
         reply_markup=ReplyKeyboardRemove()
         )
         return CHOOSE
 
-    await update.message.reply_text(text="Vuoi continuare????:\n", reply_markup=reply) 
+    await update.message.reply_text(text="Vuoi continuare????:\n", reply_markup=reply)
 
     return KEYWORD
 
 
-async def stop_continue(update: Update, context: ContextTypes.context) -> int:
-    """Ask confirm before start download."""
-    user = update.message.from_user
-    logger.info("User %s selected: %s", user.first_name, update.message.text)
-    return update.message.text
-
-
 async def choose(update: Update, context: ContextTypes.context) -> int:
     """Select wich torrent download and call canfirm action"""
+    logger.info("CHOOSE state")
     user = update.message.from_user
     logger.info("User %s choose: %s", user.first_name, update.message.text)
     # print(update.message.text) #### < RISPOSTA DEL CLIENTE
@@ -205,11 +206,11 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
             "Write wich want to download.",
             reply_markup=ReplyKeyboardRemove()
         )
-        
+
         return CHOOSE
     # Else store the item to download in a list
     store_information("", "", "", res)
-    
+
     for i in res:
         try:
             print("{res} - {url}".format(res=globalvar[0][int(i)], url= globalvar[2][int(i)]))
@@ -238,6 +239,7 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
 
 async def confirm(update: Update, context: ContextTypes.context) -> int:
     """Ask confirm before start download."""
+    logger.info("CONFIRM state")
     user = update.message.from_user
     logger.info("User %s selected: %s", user.first_name, update.message.text)
     #aggiungere controllo regex
@@ -261,6 +263,10 @@ async def confirm(update: Update, context: ContextTypes.context) -> int:
 
 async def cancel(update: Update, context: ContextTypes.context) -> int:
     """Cancels and ends the conversation."""
+    global globalvar
+    del globalvar
+    globalvar = ["", "", "", ""]
+    logger.info("CANCEL state")
     user = update.message.from_user
     logger.info("User %s canceled the conversation.", user.first_name)
     await update.message.reply_text(
@@ -285,9 +291,14 @@ def store_information(foundtorrents, magnetlinks, urls, select):
     """Store the conversation info as a global var list."""
     global globalvar
     if (foundtorrents != "") & (magnetlinks != "") & (urls != ""):
-        globalvar[0] = foundtorrents
-        globalvar[1] = magnetlinks
-        globalvar[2] = urls
+        if (globalvar[0] == "") & (globalvar[0] == "") & (globalvar[0] == ""):
+            globalvar[0] = foundtorrents
+            globalvar[1] = magnetlinks
+            globalvar[2] = urls
+        elif (globalvar[0] != "") &  (globalvar[0] != "") & (globalvar[0] != ""):
+            globalvar[0] += foundtorrents
+            globalvar[1] += magnetlinks
+            globalvar[2] += urls
     else:
         globalvar[3] = select
 
@@ -296,8 +307,7 @@ def store_information(foundtorrents, magnetlinks, urls, select):
 def main() -> None:
     """Run the bot."""
     # Create the Application and pass it your bot's token.
-    application = Application.builder().token("5792075504:AAHlzyBukL4HDqY5T8OIX1Y-bC4mPgq0pqo").build()
-
+    application = Application.builder().token("5792075504:AAHlzyBukL4HDqY5T8OIX1Y-bC4mPgq0pqo").build()    
     # Add conversation handler with the states CATEGORIES, PHOTO, LOCATION, KEYWORD
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],

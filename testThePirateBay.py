@@ -34,11 +34,13 @@ class ThePirateBay:
 
 
 
-    def GetSubCategories(self, category):
+    def GetSubCategories(self):
         ## Or just a subset of categories, like VIDEO
         #CATEGORIES.VIDEO.printOptions()
+        category = 200
+        
         with self.Capturing() as output:
-            CATEGORIES.VIDEO.printOptions()
+            CATEGORIES.category.printOptions()
         return output
 
 
@@ -76,6 +78,9 @@ class ThePirateBay:
         if len(self.torrents) == 0:
             return foundtorrents, magnetlinks, url
         
+        if page != 1:
+            i = (page - 1) * 30
+
         for torrent in self.torrents:
             #print("[{i}]".format(i=i), torrent)
             line = "[{i}] - {torrent}".format(i=i, torrent=torrent)
