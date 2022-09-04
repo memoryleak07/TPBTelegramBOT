@@ -80,10 +80,10 @@ async def start(update: Update, context: ContextTypes.context) -> int:
     globalvar = ["", "", "", ""]
     logger.info("START state")
     reply_keyboard = [["Music", "Movie", "Other"]]
+    await update.message.reply_text("Hi! I'm Bot.\n")
     await update.message.reply_text(
-        "Hi! I'm Bot.\n"
-        "Please select a category or /skip.\n"
-        "Send /cancel /start to restart conversation.\n\n  ",
+        "Select a category or /skip.\n"
+        "Send /cancel /start to restart conversation.\n\n",
         reply_markup=ReplyKeyboardMarkup(
             reply_keyboard, one_time_keyboard=True, input_field_placeholder="Send /skip to go haead."
         ),
@@ -151,7 +151,7 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     foundtorrents, magnetlinks, urls = pirate.CustomizedSearch(search, offset, 104)
     store_information(foundtorrents, magnetlinks, urls, "")
 
-    # Check if no torrents found retunr KEYWORD state
+    # Check if no torrents found return KEYWORD state
     if (len(foundtorrents)) == 0:
         if offset == 1:
             logger.info("No torrents found :-(")
@@ -199,17 +199,15 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
     # print(update.message.text) #### < RISPOSTA DEL CLIENTE
     # Conver user response in numeric list
     res = re.findall(r'\d+', update.message.text)
-    # Check the string if not valid return in CHOOSSE state
+    # Check the string if not valid return in CHOOSE state
     if len(res) == 0:
         await update.message.reply_text(
-            "Error ! Insert a list of numbers! Es. 2 or 2, 9, 3...\n"
-            "Write wich want to download.",
+            "No! Input one or a list of numbers! Es. 2 or 2, 9, 3...\n",
             reply_markup=ReplyKeyboardRemove()
         )
+        await update.message.reply_text("Write wich you want to download.")
 
         return CHOOSE
-    # Else store the item to download in a list
-    store_information("", "", "", res)
 
     for i in res:
         try:
@@ -218,7 +216,13 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
                 "{res} - {url}".format(res=globalvar[0][int(i)], url= globalvar[2][int(i)]),
             )
         except Exception as ex:
-            await update.message.reply_text(str(ex))
+            await update.message.reply_text("No! " + str(ex))
+            await update.message.reply_text("Write wich you want do download.")
+
+            return CHOOSE
+
+    # Else store the items to download in a list
+    store_information("", "", "", res)
 
     inline_button = [[
         InlineKeyboardButton(text="Yes", switch_inline_query_current_chat="Yes"),
@@ -333,3 +337,15 @@ if __name__ == "__main__":
     # main()
     pirate = ThePirateBay()
     main()
+
+
+# from testThePirateBay import CATEGORIES
+# pirate = ThePirateBay()
+
+# CATGROUP = ["ALL","AUDIO","VIDEO","APPLICATIONS","GAMES","PORN","OTHER"]
+# result = getattr(CATEGORIES, "AUDIO")
+# print(result)
+# result = (getattr(getattr(CATEGORIES, "AUDIO"), "ALL"))
+# print(result)
+# print(CATEGORIES.AUDIO.__dict__.keys())
+# print(vars(CATEGORIES))
