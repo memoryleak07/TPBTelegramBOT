@@ -126,7 +126,7 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
 
         return CHOOSE
 
-    # Else try to retrieve keyword and offset from resp. If Except set page = 1, 
+    # Else try to retrieve keyword and offset (page) from resp. If Except set page = 1, 
     try:
         search = update.message.text.split('-')[1]
         offset = int(update.message.text.split('-')[2])
@@ -174,13 +174,15 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     for torrent in foundtorrents:
         await update.message.reply_text(torrent)
 
+    # Check if found torrent are less than 30, so the search is finished
     if (len(foundtorrents)) < 30:
         await update.message.reply_text("OK! Write wich want to download.")
         await update.message.reply_text("Or send /cancel to restart.",
         reply_markup=ReplyKeyboardRemove()
         )
         return CHOOSE
-
+    
+    # Otherwise ask to continue (page+1) or stop the search (Continue / Stop inline button)
     await update.message.reply_text(text="Do you want to continue search?:\n", reply_markup=reply)
 
     return KEYWORD
