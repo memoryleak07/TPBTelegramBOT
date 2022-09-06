@@ -37,6 +37,8 @@ from telegram.ext import (
     ConversationHandler,
     MessageHandler,
     filters,
+    CommandHandler,
+    CallbackQueryHandler
 )
 
 from ThePirateBay import ThePirateBay
@@ -52,44 +54,42 @@ CATEGORIES, SUBCATEGORIES, KEYWORD, CHOOSE, CONFIRM = range(5)
 foundtorrents = []
 magnetlinks = []
 urls = []
-globalvar = ["", "", "", "", ""]
+globalvar = ["", "", "", "", "", "",""]
 
 #input_field_placeholder="e.g: *artist* *album* *movie*" / e.g: 3 , 5, 12
 
 async def start(update: Update, context: ContextTypes.context) -> int:
     """Starts the conversation and asks the user about categories."""
-    delete_information()
     logger.info("START state")
+    delete_information()
 
-    # inline_button = pirate.GetInlineAllCategories()
-    # print(inline_button)
-    # await update.message.reply_text(text="Please confirm the selected torrent:", reply_markup=reply)
     inline_button = pirate.GetInlineAllCategories()
-    reply = InlineKeyboardMarkup(inline_keyboard=inline_button, resize_keyboard=True)
 
-    # reply_keyboard = [["Music", "Movie", "Other"]]
-    await update.message.reply_text("Hi! I'm Bot.\n")
-    await update.message.reply_text(
-        # "Select a category or /skip.\n" 
-        "Send /cancel /start to restart conversation.\n\n",
-        reply_markup=reply
+    await update.message.reply_text("Hi! I'm Bot.")
+    await update.message.reply_text("Select a category or /skip.")
+    await update.message.reply_text("Send /cancel /start to restart conversation.",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=inline_button, resize_keyboard=True)
     )
 
     return CATEGORIES
 
 
 async def categories(update: Update, context: ContextTypes.context) -> int:
-    """Stores the selected categories and asks for keyword."""
+    """Stores the selected categories and asks for subcategory."""
     logger.info("CATEGORIES state")
     user = update.callback_query
-    user = update.message.from_user
-    logger.info("Category of %s: %s", user.first_name, update.message.text)
-    await update.message.reply_text(
-        "I see! Now, input a keyword to search...",
-        reply_markup=ReplyKeyboardRemove()
+    #print('query:', query)
+    logger.info("User category is: %s", user.data )
+
+    inline_button  = pirate.GetInlineSubCategories(user.data)
+
+    store_information("", "", "", "", user.data, "", "")
+
+    await update.callback_query.message.edit_text("Select a subcategory: ",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=inline_button, resize_keyboard=True)
     )
 
-    return KEYWORD
+    return SUBCATEGORIES
 
 
 async def skip_categories(update: Update, context: ContextTypes.context) -> int:
@@ -105,16 +105,20 @@ async def skip_categories(update: Update, context: ContextTypes.context) -> int:
     return KEYWORD
 
 
-
 ####################################
 async def subcategories(update: Update, context: ContextTypes.context) -> int:
     """Stores the selected categories and asks for keyword."""
-    logger.info("CATEGORIES state")
-    user = update.message.from_user
-    logger.info("Category of %s: %s", user.first_name, update.message.text)
-    await update.message.reply_text(
-        "I see! Now, input a keyword to search...",
-        reply_markup=ReplyKeyboardRemove()
+    logger.info("SUBCATEGORIES state")
+    user = update.callback_query
+    #print('query:', query)
+    logger.info("User subcategory is: %s", user.data )
+
+    # print(getattr(getattr(CATEGORIES, "AUDIO"), user.data)
+    store_information("", "", "", "", "", user.data, "")
+
+
+    await update.callback_query.message.edit_text(
+        "I see! Now, input a keyword to search..."
     )
 
     return KEYWORD
@@ -124,7 +128,7 @@ async def skip_subcategories(update: Update, context: ContextTypes.context) -> i
     """Skips the categories and asks for keyword."""
     logger.info("SKIP state")
     user = update.message.from_user
-    logger.info("User %s did not set a category.", user.first_name)
+    logger.info("User %s did not set a subcategory.", user.first_name)
     await update.message.reply_text(
         "Ok! Now, input a keyword to search...",
         reply_markup=ReplyKeyboardRemove()
@@ -167,10 +171,13 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
             )
             return CHOOSE
 
-    # Send pirate command (keyword (str), page (int), category (int))
-    foundtorrents, magnetlinks, urls = pirate.CustomizedSearch(search, offset, 104)
+    # Retrive the category (int)
+    category = str(globalvar[4])
+    subcategory = str(globalvar[5])
+    # Send pirate search command (keyword (str), page (int), category (int))
+    foundtorrents, magnetlinks, urls = pirate.CustomizedSearch(search, offset, category, subcategory)
     # Store in global list the -torrents-magnet-url found, -sel blank.
-    store_information(foundtorrents, magnetlinks, urls, search, "")
+    store_information(foundtorrents, magnetlinks, urls, search, "", "", "")
 
     # Check if no torrents found return KEYWORD state
     if (len(foundtorrents)) == 0:
@@ -194,7 +201,6 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
         InlineKeyboardButton(text="Continue", switch_inline_query_current_chat=yesText),
         InlineKeyboardButton(text="Stop", switch_inline_query_current_chat="Stop"),
     ]]
-    reply = InlineKeyboardMarkup(inline_keyboard=inline_button)
 
     # Reply result (chunk_size = 30)
     for torrent in foundtorrents:
@@ -209,7 +215,9 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
         return CHOOSE
     
     # Otherwise ask to continue (page+1) or stop the search (Continue / Stop inline button)
-    await update.message.reply_text(text="Do you want to continue search?:\n", reply_markup=reply)
+    await update.message.reply_text(text="Do you want to continue search?:\n",
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=inline_button)
+    )
 
     return KEYWORD
 
@@ -247,15 +255,17 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
             return CHOOSE
 
     # Else store the items to download in a list
-    store_information("", "", "", "", res)
+    store_information("", "", "", "", "", "", res)
 
     inline_button = [[
         InlineKeyboardButton(text="Yes", switch_inline_query_current_chat="Yes"),
         InlineKeyboardButton(text="No", switch_inline_query_current_chat="No"),
     ]]
-    reply = InlineKeyboardMarkup(inline_keyboard=inline_button)
+    
 
-    await update.message.reply_text(text="Please confirm the selected torrent:", reply_markup=reply)
+    await update.message.reply_text(text="Please confirm the selected torrent:",
+        reply_markup = InlineKeyboardMarkup(inline_keyboard=inline_button)
+    )
 
     return CONFIRM
 
@@ -307,7 +317,7 @@ async def cancel(update: Update, context: ContextTypes.context) -> int:
 #     return foundtorrents
 
 
-def store_information(foundtorrents, magnetlinks, urls, search, select):
+def store_information(foundtorrents, magnetlinks, urls, search, category, subcategory, select):
     """Store the conversation info as a global var list."""
     logger.info("Calling store_information()")
     global globalvar
@@ -321,15 +331,22 @@ def store_information(foundtorrents, magnetlinks, urls, search, select):
             globalvar[0] += foundtorrents
             globalvar[1] += magnetlinks
             globalvar[2] += urls
-    else:
-        globalvar[4] = select
+
+    elif (foundtorrents == "") & (magnetlinks == "") & (urls == "") & (search == "") & (category != "") & (subcategory == "") & (select == ""):
+        globalvar[4] = category
+
+    elif (foundtorrents == "") & (magnetlinks == "") & (urls == "") & (search == "") & (category == "") & (subcategory != "") & (select == ""):
+        globalvar[5] = subcategory
+
+    elif (foundtorrents == "") & (magnetlinks == "") & (urls == "") & (search == "") & (category == "") & (subcategory == "") & (select != ""):
+        globalvar[6] = select
 
 
 def delete_information():
         logger.info("Calling delete_information()")
         global globalvar
         del globalvar
-        globalvar = ["", "", "", "", ""]
+        globalvar = ["", "", "", "", "", "", ""]
 
 
 def main() -> None:
@@ -340,12 +357,12 @@ def main() -> None:
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
-            CATEGORIES: [
-                MessageHandler(filters.Regex("^(ALL|AUDIO|VIDEO|APPLICATIONS|GAMES|PORN|OTHER)$"), categories),
+            CATEGORIES:[
+                CallbackQueryHandler(categories),
                 CommandHandler("skip", skip_categories),
             ],
-            SUBCATEGORIES: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, subcategories),
+            SUBCATEGORIES:[
+                CallbackQueryHandler(subcategories),
                 CommandHandler("skip", skip_subcategories),
             ],
             KEYWORD: [MessageHandler(filters.TEXT & ~filters.COMMAND, keyword)],

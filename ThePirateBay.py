@@ -12,46 +12,29 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 #
 
-
 class ThePirateBay:
-    # To capture the print output
-    class Capturing(list):
-    
-        def __enter__(self):
-            self._stdout = sys.stdout
-            sys.stdout = self._stringio = StringIO()
-            return self
-        def __exit__(self, *args):
-            self.extend(self._stringio.getvalue().splitlines())
-            del self._stringio    # free up some memory
-            sys.stdout = self._stdout
-
 
     def __init__(self) -> None:
         # Create a TPB object with a domain name
         # t = TPB('https://tpb.party')
-
         # Or create a TPB object with default domain
         self.t = TPB()
         
 
     def GetAllCategories(self):
-        ## To print all available categories, use the classmethod printOptions
-        # with self.Capturing() as output:
-        #     CATEGORIES.printOptions()
-        # return output
         output = []
         for y in CATEGORIES.__dict__.keys():
             if not (y.startswith("__")):
                 output.append(y)
+
         return output
+
 
     def GetInlineAllCategories(self):
         inline_button = []
         row_button = []
         i = 0
         categories = self.GetAllCategories()
-        #reply = InlineKeyboardMarkup(inline_keyboard=inline_button)
         for row in categories:
             if i < 2:
                 row_button.append(InlineKeyboardButton(text=row, callback_data=row))
@@ -68,44 +51,35 @@ class ThePirateBay:
     def GetSubCategories(self, macro:str):
         y:str
         output = []
-        for y in (getattr(getattr(CATEGORIES, macro), "__dict__").keys()):
+        categories = (getattr(CATEGORIES, macro)).__dict__.keys()
+        for y in categories:
             if not (y.startswith("__")):
                 output.append(y)
+
         return output
 
 
-
-    # def GetSubCategories(self):
-    #     pass
-        ## Or just a subset of categories, like VIDEO
-        #CATEGORIES.VIDEO.printOptions()
-        # category = 200
-        
-        # with self.Capturing() as output:
-        #     CATEGORIES.category.printOptions()
-        # return output
-
-
-    def PrintResults(self):
-        ## See how many torrents were found
-        #print('There were {0} torrents found.'.format(len(self.torrents)))
-        # Iterate through list of torrents and print info for Torrent object
+    def GetInlineSubCategories(self, macro:str):
+        inline_button = []
+        row_button = []
         i = 0
-        foundtorrent = []
-        for torrent in self.torrents:
-            print("[{i}]".format(i=i), torrent)
-            foundtorrent.append(torrent)
-            i = i + 1
-        return foundtorrent
+        categories = self.GetSubCategories(macro)
+        #reply = InlineKeyboardMarkup(inline_keyboard=inline_button)
+        print(categories)
+        for row in categories:
+            if i < 3:
+                row_button.append(InlineKeyboardButton(text=row, callback_data=row))
+                i += 1
+            
+            if (i >= 3) or (categories[-1] == row_button[-1]):
+                inline_button.append(row_button)
+                row_button = []
+                i = 0
+            
+        return inline_button
 
 
-    def QuickSearch(self, keyword:str):
-        ## Quick search for torrents, returns a Torrents object
-        self.torrents = self.t.search(keyword)
-        self.PrintResults()
-
-
-    def CustomizedSearch(self, keyword:str, page:int, categories:int):
+    def CustomizedSearch(self, keyword:str, page:int, categories:str, subcategories:str):
         ## Customize your search
         #self.torrents = self.t.search(keyword, page=page, order=ORDERS.NAME.DES, category=categories)        
         foundtorrents = []
@@ -113,11 +87,20 @@ class ThePirateBay:
         url = []
         i = 0
 
-        self.torrents = self.t.search(
-            keyword, page=page, order=ORDERS.NAME.DES, category=categories)
+        # Retrieve the category (int)
+        if (categories == "") & (subcategories == ""):
+            cat = 0
+        elif (categories != "") & (subcategories != ""):
+            cat = (getattr(getattr(CATEGORIES, categories), subcategories))
+        
+        print(cat)
+        # Search:
+        self.torrents = self.t.search(keyword, page=page, order=ORDERS.NAME.DES, category=cat)
+
         if len(self.torrents) == 0:
             return foundtorrents, magnetlinks, url
         
+        # Var i is the index for user to allow select wich to download
         if page != 1:
             i = (page - 1) * 30
 
@@ -130,14 +113,3 @@ class ThePirateBay:
             i = i+1
         
         return foundtorrents, magnetlinks, url
-
-
-    def FilterTorrent(self):
-        # Get the most seeded torrent based on a filter
-        self.torrent = self.torrents.getBestTorrent(
-        min_seeds=30, min_filesize='500 MiB', max_filesize='20 GiB')
-
-
-    def SelectTorrent(self, num: int):
-        # Or select a particular torrent by indexing
-        torrent = self.torrents[num]
