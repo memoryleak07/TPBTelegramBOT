@@ -100,7 +100,6 @@ class ThePirateBay:
         elif (categories != "") & (subcategories != ""):
             cat = getattr(getattr(CATEGORIES, categories), subcategories)
         
-        print(cat)
         # Search:
         self.torrents = self.t.search(keyword, page=page, order=ORDERS.NAME.DES, category=cat)
 

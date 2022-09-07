@@ -27,6 +27,7 @@ https://t.me/noncapiscocosastasuccedendobot
 #         f"visit https://docs.python-telegram-bot.org/en/v{TG_VER}/examples.html"
 #     )
 
+from cgitb import text
 import re
 import logging
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, InlineKeyboardMarkup, InlineKeyboardButton
@@ -92,7 +93,7 @@ async def categories(update: Update, context: ContextTypes.context) -> int:
 
     inline_button  = pirate.GetInlineSubCategories(user.data)
 
-    await update.callback_query.message.reply_text("Select a subcategory: ",
+    await update.callback_query.message.reply_text("Select a subcategory or /skip: ",
         reply_markup=InlineKeyboardMarkup(inline_keyboard=inline_button, resize_keyboard=True)
     )
 
@@ -104,15 +105,15 @@ async def skip_categories(update: Update, context: ContextTypes.context) -> int:
     logger.info("SKIP state")
     user = update.message.from_user
     logger.info("User %s did not set a category.", user.first_name)
+    await update.message.reply_text("Ok!")
     await update.message.reply_text(
-        "Ok! Now, input a keyword to search...",
+        "Now, input a keyword to search...",
         reply_markup=ReplyKeyboardRemove()
     )
 
     return KEYWORD
 
 
-####################################
 async def subcategories(update: Update, context: ContextTypes.context) -> int:
     """Stores the selected categories and asks for keyword."""
     logger.info("SUBCATEGORIES state")
@@ -123,8 +124,8 @@ async def subcategories(update: Update, context: ContextTypes.context) -> int:
     # print(getattr(getattr(CATEGORIES, "AUDIO"), user.data)
     store_information("", "", "", "", "", user.data, "")
 
-    await update.callback_query.message.reply_text(
-        "I see! Now, input a keyword to search..."
+    await update.callback_query.message.reply_text("I see!")
+    await update.callback_query.message.reply_text("Now, input a keyword to search..."
     )
 
     return KEYWORD
@@ -135,28 +136,31 @@ async def skip_subcategories(update: Update, context: ContextTypes.context) -> i
     logger.info("SKIP state")
     user = update.message.from_user
     logger.info("User %s did not set a subcategory.", user.first_name)
-    await update.message.reply_text(
-        "Ok! Now, input a keyword to search...",
+    await update.message.reply_text("Ok!")
+    await update.message.reply_text("Now, input a keyword to search...",
         reply_markup=ReplyKeyboardRemove()
     )
 
     return KEYWORD
-######################################
 
 
 
 async def keyword(update: Update, context: ContextTypes.context) -> int:
     """Stores the keyword to search and ends the conversation."""
     logger.info("KEYWORD state")
-    user = update.message.from_user
-    logger.info("User %s keyword is: %s", user.first_name, update.message.text)
+    user = update.callback_query
+    try:
+        search = user.data
+    except:
+        search = update.message.text
+
+    logger.info("User keyword is: %s", search)
 
     offset = 1
-    search = update.message.text
     # If user press "Stop":
-    if search == '@noncapiscocosastasuccedendobot Stop':
-        await update.message.reply_text("OK! Write wich want to download.")
-        await update.message.reply_text("Or send /cancel to restart.",
+    if search == 'Stop':
+        await update.effective_message.reply_text("OK! Write wich want to download.")
+        await update.effective_message.reply_text("Or send /cancel to restart.",
             reply_markup=ReplyKeyboardRemove()
         )
 
@@ -164,15 +168,15 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
 
     # Else try to retrieve keyword and offset (page) from resp. If Except set page = 1, 
     try:
-        search = update.message.text.split('-')[1]
-        offset = int(update.message.text.split('-')[2])
+        offset = int(search.split('-')[2])
+        search = search.split('-')[1]
     except Exception:
         offset = 1
 
         # If user search a new keyword while is in wrong state
         if (search != globalvar[3]) & (globalvar[3] != ""):
-            await update.message.reply_text("Finish this before start a new search.")
-            await update.message.reply_text("OK? Write wich want to download or /cancel to stop",
+            await update.effective_message.reply_text("Finish this before start a new search.")
+            await update.effective_message.reply_text("OK? Write wich want to download or /cancel to stop",
                 reply_markup=ReplyKeyboardRemove()
             )
             return CHOOSE
@@ -182,11 +186,11 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     subcategory = str(globalvar[5])
 
     if (category != "") & (subcategory != ""):
-        await update.message.reply_text("Searching in category {category} - {subcategory}...".format(category=category, subcategory=subcategory))
+        await update.effective_message.reply_text("Searching in category {category} - {subcategory}...".format(category=category, subcategory=subcategory))
     elif (category != "") & (subcategory == ""):
-        await update.message.reply_text("Searching in category {category}...".format(category=category))
+        await update.effective_message.reply_text("Searching in category {category}...".format(category=category))
     elif category == "":
-        await update.message.reply_text("Searching in ALL categories...")
+        await update.effective_message.reply_text("Searching in ALL categories...")
 
     # Send pirate search command (keyword (str), page (int), category (int))
     foundtorrents, magnetlinks, urls = pirate.CustomizedSearch(search, offset, category, subcategory)
@@ -197,8 +201,8 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     if (len(foundtorrents)) == 0:
         if offset == 1:
             logger.info("No torrents found :-(")
-            await update.message.reply_text("No torrents found :-(")
-            await update.message.reply_text("Try input a new keyword to search...",
+            await update.effective_message.reply_text("No torrents found :-(")
+            await update.effective_message.reply_text("Try input a new keyword to search...",
                 reply_markup=ReplyKeyboardRemove()
             )
             return KEYWORD
@@ -206,30 +210,30 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
 
     # Else print and store the info in globalvar
     logger.info("There were %s torrents found.", len(foundtorrents))
-    await update.message.reply_text(
+    await update.effective_message.reply_text(
         "There were {0} torrents found:".format(len(foundtorrents))
     )
     # Reply to user all link found, 30 each step
     yesText = "Continue-{search}-{offset}".format(search=search,offset=str(offset+1))
     inline_button = [[
-        InlineKeyboardButton(text="Continue", switch_inline_query_current_chat=yesText),
-        InlineKeyboardButton(text="Stop", switch_inline_query_current_chat="Stop"),
+        InlineKeyboardButton(text="Continue", callback_data=yesText),
+        InlineKeyboardButton(text="Stop", callback_data="Stop"),
     ]]
 
     # Reply result (chunk_size = 30)
     for torrent in foundtorrents:
-        await update.message.reply_text(torrent)
+        await update.effective_message.reply_text(torrent)
 
     # Check if found torrent are less than 30, so the search is finished
     if (len(foundtorrents)) < 30:
-        await update.message.reply_text("OK! Write wich want to download.")
-        await update.message.reply_text("Or send /cancel to restart.",
+        await update.effective_message.reply_text("OK! Write wich want to download.")
+        await update.effective_message.reply_text("Or send /cancel to restart.",
         reply_markup=ReplyKeyboardRemove()
         )
         return CHOOSE
     
     # Otherwise ask to continue (page+1) or stop the search (Continue / Stop inline button)
-    await update.message.reply_text(text="Do you want to continue search?:\n",
+    await update.effective_message.reply_text(text="Do you want to continue search?:\n",
         reply_markup=InlineKeyboardMarkup(inline_keyboard=inline_button)
     )
 
@@ -322,15 +326,6 @@ async def cancel(update: Update, context: ContextTypes.context) -> int:
     return ConversationHandler.END
 
 
-# def test():
-#     #categories = pirate.PrintCategories()
-#     # print(categories[6])
-#     # pirate.QuickSearch("pink floyd flac")
-#     keyword = "nirvana"
-#     foundtorrents = pirate.CustomizedSearch(keyword, 104)
-#     return foundtorrents
-
-
 def store_information(foundtorrents, magnetlinks, urls, search, category, subcategory, select):
     """Store the conversation info as a global var list."""
     logger.info("Calling store_information()")
@@ -379,7 +374,11 @@ def main() -> None:
                 CallbackQueryHandler(subcategories),
                 CommandHandler("skip", skip_subcategories),
             ],
-            KEYWORD: [MessageHandler(filters.TEXT & ~filters.COMMAND, keyword)],
+            #KEYWORD: [MessageHandler(filters.TEXT & ~filters.COMMAND, keyword)],
+            KEYWORD: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, keyword),
+                CallbackQueryHandler(keyword)
+            ],
             CHOOSE: [MessageHandler(filters.TEXT & ~filters.COMMAND, choose)],
             CONFIRM: [MessageHandler(filters.TEXT & ~filters.COMMAND, confirm)],
         },
