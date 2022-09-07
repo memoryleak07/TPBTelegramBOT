@@ -51,6 +51,9 @@ class ThePirateBay:
     def GetSubCategories(self, macro:str):
         y:str
         output = []
+        # if macro == "ALL":
+        #     return output
+
         categories = (getattr(CATEGORIES, macro)).__dict__.keys()
         for y in categories:
             if not (y.startswith("__")):
@@ -65,7 +68,9 @@ class ThePirateBay:
         i = 0
         categories = self.GetSubCategories(macro)
         #reply = InlineKeyboardMarkup(inline_keyboard=inline_button)
-        print(categories)
+        if len(categories) == "":
+            return 
+
         for row in categories:
             if i < 3:
                 row_button.append(InlineKeyboardButton(text=row, callback_data=row))
@@ -90,8 +95,10 @@ class ThePirateBay:
         # Retrieve the category (int)
         if (categories == "") & (subcategories == ""):
             cat = 0
+        elif (categories != "") & (subcategories == ""):
+            cat = getattr(CATEGORIES, "ALL")
         elif (categories != "") & (subcategories != ""):
-            cat = (getattr(getattr(CATEGORIES, categories), subcategories))
+            cat = getattr(getattr(CATEGORIES, categories), subcategories)
         
         print(cat)
         # Search:

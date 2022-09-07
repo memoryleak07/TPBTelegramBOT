@@ -81,11 +81,18 @@ async def categories(update: Update, context: ContextTypes.context) -> int:
     #print('query:', query)
     logger.info("User category is: %s", user.data )
 
-    inline_button  = pirate.GetInlineSubCategories(user.data)
-
     store_information("", "", "", "", user.data, "", "")
 
-    await update.callback_query.message.edit_text("Select a subcategory: ",
+    if user.data == "ALL":
+        await update.callback_query.message.reply_text("Ok! Now, input a keyword to search...",
+        reply_markup=ReplyKeyboardRemove()
+        )
+
+        return KEYWORD
+
+    inline_button  = pirate.GetInlineSubCategories(user.data)
+
+    await update.callback_query.message.reply_text("Select a subcategory: ",
         reply_markup=InlineKeyboardMarkup(inline_keyboard=inline_button, resize_keyboard=True)
     )
 
@@ -116,8 +123,7 @@ async def subcategories(update: Update, context: ContextTypes.context) -> int:
     # print(getattr(getattr(CATEGORIES, "AUDIO"), user.data)
     store_information("", "", "", "", "", user.data, "")
 
-
-    await update.callback_query.message.edit_text(
+    await update.callback_query.message.reply_text(
         "I see! Now, input a keyword to search..."
     )
 
@@ -174,6 +180,14 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     # Retrive the category (int)
     category = str(globalvar[4])
     subcategory = str(globalvar[5])
+
+    if (category != "") & (subcategory != ""):
+        await update.message.reply_text("Searching in category {category} - {subcategory}...".format(category=category, subcategory=subcategory))
+    elif (category != "") & (subcategory == ""):
+        await update.message.reply_text("Searching in category {category}...".format(category=category))
+    elif category == "":
+        await update.message.reply_text("Searching in ALL categories...")
+
     # Send pirate search command (keyword (str), page (int), category (int))
     foundtorrents, magnetlinks, urls = pirate.CustomizedSearch(search, offset, category, subcategory)
     # Store in global list the -torrents-magnet-url found, -sel blank.
