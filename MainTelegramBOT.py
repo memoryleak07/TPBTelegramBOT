@@ -66,9 +66,9 @@ async def start(update: Update, context: ContextTypes.context) -> int:
 
     inline_button = pirate.GetInlineAllCategories()
 
-    await update.message.reply_text("Hi! I'm Bot.")
-    await update.message.reply_text("Select a category or /skip.")
-    await update.message.reply_text("Send /cancel /start to restart conversation.",
+    await update.effective_message.reply_text("Hi! I'm Bot.")
+    await update.effective_message.reply_text("Select a category or /skip.")
+    await update.effective_message.reply_text("Send /cancel /start to restart conversation.",
         reply_markup=InlineKeyboardMarkup(inline_keyboard=inline_button, resize_keyboard=True)
     )
 
@@ -105,8 +105,8 @@ async def skip_categories(update: Update, context: ContextTypes.context) -> int:
     logger.info("SKIP state")
     user = update.message.from_user
     logger.info("User %s did not set a category.", user.first_name)
-    await update.message.reply_text("Ok!")
-    await update.message.reply_text(
+    await update.effective_message.reply_text("Ok!")
+    await update.effective_message.reply_text(
         "Now, input a keyword to search...",
         reply_markup=ReplyKeyboardRemove()
     )
@@ -136,13 +136,12 @@ async def skip_subcategories(update: Update, context: ContextTypes.context) -> i
     logger.info("SKIP state")
     user = update.message.from_user
     logger.info("User %s did not set a subcategory.", user.first_name)
-    await update.message.reply_text("Ok!")
-    await update.message.reply_text("Now, input a keyword to search...",
+    await update.effective_message.reply_text("Ok!")
+    await update.effective_message.reply_text("Now, input a keyword to search...",
         reply_markup=ReplyKeyboardRemove()
     )
 
     return KEYWORD
-
 
 
 async def keyword(update: Update, context: ContextTypes.context) -> int:
@@ -232,7 +231,7 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
         )
         return CHOOSE
     
-    # Otherwise ask to continue (page+1) or stop the search (Continue / Stop inline button)
+    # Otherwise ask to continue (offset+1) or stop the search (Continue / Stop inline button)
     await update.effective_message.reply_text(text="Do you want to continue search?:\n",
         reply_markup=InlineKeyboardMarkup(inline_keyboard=inline_button)
     )
@@ -250,8 +249,8 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
     res = re.findall(r'\d+', update.message.text)
     # Check the string if not valid return CHOOSE state
     if len(res) == 0:
-        await update.message.reply_text("No! Input one or a list of numbers!")
-        await update.message.reply_text("Write wich you want to download or /cancel to stop.",
+        await update.effective_message.reply_text("No! Input one or a list of numbers!")
+        await update.effective_message.reply_text("Write wich you want to download or /cancel to stop.",
             reply_markup=ReplyKeyboardRemove()
         )
 
@@ -261,12 +260,12 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
     for i in res:
         try:
             print("{res} - {url}".format(res=globalvar[0][int(i)], url= globalvar[2][int(i)]))
-            await update.message.reply_text(
+            await update.effective_message.reply_text(
                 "{res} - {url}".format(res=globalvar[0][int(i)], url= globalvar[2][int(i)]),
             )
         except Exception as ex:
-            await update.message.reply_text("No! " + str(ex))
-            await update.message.reply_text("Write wich you want do download or /cancel to stop.",
+            await update.effective_message.reply_text("No! " + str(ex))
+            await update.effective_message.reply_text("Write wich you want do download or /cancel to stop.",
                 reply_markup=ReplyKeyboardRemove()
             )
 
@@ -276,12 +275,12 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
     store_information("", "", "", "", "", "", res)
 
     inline_button = [[
-        InlineKeyboardButton(text="Yes", switch_inline_query_current_chat="Yes"),
-        InlineKeyboardButton(text="No", switch_inline_query_current_chat="No"),
+        InlineKeyboardButton(text="Yes", callback_data="Yes"),
+        InlineKeyboardButton(text="No", callback_data="No"),
     ]]
     
 
-    await update.message.reply_text(text="Please confirm the selected torrent:",
+    await update.effective_message.reply_text(text="Please confirm the selected torrent:",
         reply_markup = InlineKeyboardMarkup(inline_keyboard=inline_button)
     )
 
@@ -291,12 +290,12 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
 async def confirm(update: Update, context: ContextTypes.context) -> int:
     """Ask confirm before start download."""
     logger.info("CONFIRM state")
-    user = update.message.from_user
-    logger.info("User %s selected: %s", user.first_name, update.message.text)
+    user = update.callback_query
+    logger.info("User selected: %s", user.data)
     #aggiungere controllo regex
-    if update.message.text == "@noncapiscocosastasuccedendobot No":
-        await update.message.reply_text("Ok! Let's start again!")
-        await update.message.reply_text("Input a keyword to search...",
+    if user.data == "No":
+        await update.effective_message.reply_text("Ok! Let's start again!")
+        await update.effective_message.reply_text("Input a keyword to search...",
             reply_markup=ReplyKeyboardRemove(),
         )
 
@@ -304,8 +303,8 @@ async def confirm(update: Update, context: ContextTypes.context) -> int:
 
         return KEYWORD
 
-    await update.message.reply_text("My job is done! I hope it was helpful.")
-    await update.message.reply_text("Send /start to start over.",
+    await update.effective_message.reply_text("My job is done! I hope it was helpful.")
+    await update.effective_message.reply_text("Send /start to start over.",
         reply_markup=ReplyKeyboardRemove(),
     )
 
@@ -318,8 +317,8 @@ async def cancel(update: Update, context: ContextTypes.context) -> int:
     delete_information()
     user = update.message.from_user
     logger.info("User %s canceled the conversation.", user.first_name)
-    await update.message.reply_text("Bye! I hope we can talk again some day.")
-    await update.message.reply_text("Send /start to start over.",
+    await update.effective_message.reply_text("Bye! I hope we can talk again some day.")
+    await update.effective_message.reply_text("Send /start to start over.",
         reply_markup=ReplyKeyboardRemove()
     )
 
@@ -379,8 +378,14 @@ def main() -> None:
                 MessageHandler(filters.TEXT & ~filters.COMMAND, keyword),
                 CallbackQueryHandler(keyword)
             ],
-            CHOOSE: [MessageHandler(filters.TEXT & ~filters.COMMAND, choose)],
-            CONFIRM: [MessageHandler(filters.TEXT & ~filters.COMMAND, confirm)],
+            CHOOSE: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, choose),
+                CallbackQueryHandler(choose)
+            ],
+            CONFIRM: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, confirm),
+                CallbackQueryHandler(confirm)
+            ],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
@@ -395,14 +400,3 @@ if __name__ == "__main__":
     # main()
     pirate = ThePirateBay()
     main()
-
-
-# from testThePirateBay import CATEGORIES
-# pirate = ThePirateBay()
-# CATGROUP = ["ALL","AUDIO","VIDEO","APPLICATIONS","GAMES","PORN","OTHER"]
-# result = getattr(CATEGORIES, "AUDIO")
-# print(result)
-# result = (getattr(getattr(CATEGORIES, "AUDIO"), "ALL"))
-# print(result)
-# print(CATEGORIES.AUDIO.__dict__.keys())
-# print(vars(CATEGORIES))

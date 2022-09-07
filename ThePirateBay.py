@@ -96,7 +96,8 @@ class ThePirateBay:
         if (categories == "") & (subcategories == ""):
             cat = 0
         elif (categories != "") & (subcategories == ""):
-            cat = getattr(CATEGORIES, "ALL")
+            cat = getattr(getattr(CATEGORIES, categories), "ALL")            
+            #cat = getattr(CATEGORIES, "ALL")
         elif (categories != "") & (subcategories != ""):
             cat = getattr(getattr(CATEGORIES, categories), subcategories)
         
