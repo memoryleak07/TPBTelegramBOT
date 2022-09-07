@@ -357,6 +357,22 @@ def delete_information():
         globalvar = ["", "", "", "", "", "", ""]
 
 
+
+async def status(update: Update, context: ContextTypes.context) -> int:
+    """Starts the conversation and asks the user about categories."""
+    logger.info("STATUS state")
+
+    await update.effective_message.reply_text("Hi! I'm STATUS.")
+    # inline_button = pirate.GetInlineAllCategories()
+    # await update.effective_message.reply_text("Select a category or /skip.")
+    # await update.effective_message.reply_text("Send /cancel /start to restart conversation.",
+    #     reply_markup=InlineKeyboardMarkup(inline_keyboard=inline_button, resize_keyboard=True)
+    # )
+
+    return ConversationHandler.END
+
+
+
 def main() -> None:
     """Run the bot."""
     # Create the Application and pass it your bot's token.
@@ -391,6 +407,9 @@ def main() -> None:
     )
 
     application.add_handler(conv_handler)
+
+    # Torrent integration:
+    application.add_handler(CommandHandler("status", status))
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling()

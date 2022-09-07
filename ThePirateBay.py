@@ -95,10 +95,13 @@ class ThePirateBay:
         # Retrieve the category (int)
         if (categories == "") & (subcategories == ""):
             cat = 0
+            
         elif (categories == "ALL") & (subcategories == ""):
             cat = getattr(CATEGORIES, "ALL")
+
         elif (categories != "") & (subcategories == ""):
-            cat = getattr(getattr(CATEGORIES, categories), "ALL")            
+            cat = getattr(getattr(CATEGORIES, categories), "ALL")   
+
         elif (categories != "") & (subcategories != ""):
             cat = getattr(getattr(CATEGORIES, categories), subcategories)
         
