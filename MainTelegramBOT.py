@@ -185,11 +185,11 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     subcategory = str(globalvar[5])
 
     if (category != "") & (subcategory != ""):
-        await update.effective_message.reply_text("Searching in category {category} - {subcategory}...".format(category=category, subcategory=subcategory))
+        await update.effective_message.reply_text("Searching \"{search}\" in category \"{category} - {subcategory}\"...".format(search=search, category=category, subcategory=subcategory))
     elif (category != "") & (subcategory == ""):
-        await update.effective_message.reply_text("Searching in category {category}...".format(category=category))
+        await update.effective_message.reply_text("Searching \"{search}\" in category \"{category}\"...".format(search=search, category=category))
     elif category == "":
-        await update.effective_message.reply_text("Searching in ALL categories...")
+        await update.effective_message.reply_text("Searching \"{search}\" in \"ALL\" categories...".format(search=search))
 
     # Send pirate search command (keyword (str), page (int), category (int))
     foundtorrents, magnetlinks, urls = pirate.CustomizedSearch(search, offset, category, subcategory)
@@ -215,7 +215,7 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     # Reply to user all link found, 30 each step
     yesText = "Continue-{search}-{offset}".format(search=search,offset=str(offset+1))
     inline_button = [[
-        InlineKeyboardButton(text="Continue", callback_data=yesText),
+        InlineKeyboardButton(text="Next Page >", callback_data=yesText),
         InlineKeyboardButton(text="Stop", callback_data="Stop"),
     ]]
 
