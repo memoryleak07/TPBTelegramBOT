@@ -27,10 +27,10 @@ https://t.me/noncapiscocosastasuccedendobot
 #         f"visit https://docs.python-telegram-bot.org/en/v{TG_VER}/examples.html"
 #     )
 
-from cgitb import text
+
 import re
 import logging
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import ReplyKeyboardRemove, Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -61,7 +61,8 @@ globalvar = {"id": ["", "", "", "", "", "", ""]}
 
 async def start(update: Update, context: ContextTypes.context) -> int:
     """Starts the conversation and asks the user about categories."""
-    logger.info("START state")
+    id = update.message.chat_id
+    logger.info("Chat %s enter START state", id)
 
     inline_button = pirate.GetInlineAllCategories()
 
@@ -76,10 +77,9 @@ async def start(update: Update, context: ContextTypes.context) -> int:
 
 async def categories(update: Update, context: ContextTypes.context) -> int:
     """Stores the selected categories and asks for subcategory."""
-    logger.info("CATEGORIES state")
     user = update.callback_query
     id = user.message.chat_id
-
+    logger.info("Chat %s enter CATEGORIES state", id)
     logger.info("Chat %s category is: %s", id, user.data )
 
     store_id_information(id, "", "", "", "", user.data, "", "")
@@ -102,9 +102,8 @@ async def categories(update: Update, context: ContextTypes.context) -> int:
 
 async def skip_categories(update: Update, context: ContextTypes.context) -> int:
     """Skips the categories and asks for keyword."""
-    logger.info("SKIP state")
-    user = update.message.from_user
     id = update.message.chat_id
+
     store_id_information(id, "", "", "", "", "", "", "")
 
     logger.info("Chat %s did not set a category.", id)
@@ -118,10 +117,10 @@ async def skip_categories(update: Update, context: ContextTypes.context) -> int:
 
 async def subcategories(update: Update, context: ContextTypes.context) -> int:
     """Stores the selected categories and asks for keyword."""
-    logger.info("SUBCATEGORIES state")
     user = update.callback_query
     id = user.message.chat_id
 
+    logger.info("Chat %s enter SUBCATEGORIES state", id)
     logger.info("Chat %s subcategory is: %s", id, user.data )
 
     # print(getattr(getattr(CATEGORIES, "AUDIO"), user.data)
@@ -136,8 +135,6 @@ async def subcategories(update: Update, context: ContextTypes.context) -> int:
 
 async def skip_subcategories(update: Update, context: ContextTypes.context) -> int:
     """Skips the categories and asks for keyword."""
-    logger.info("SKIP state")
-    user = update.message.from_user
     id = update.message.chat_id
     store_id_information(id, "", "", "", "", "", "", "")
     logger.info("Chat %s did not set a subcategory.", id)
@@ -151,7 +148,6 @@ async def skip_subcategories(update: Update, context: ContextTypes.context) -> i
 
 async def keyword(update: Update, context: ContextTypes.context) -> int:
     """Stores the keyword to search and ends the conversation."""
-    logger.info("KEYWORD state")
     user = update.callback_query
 
     try:
@@ -161,13 +157,14 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
         search = update.message.text
         id = update.message.chat_id
 
+    logger.info("Chat %s enter KEYWORD state", id)
     logger.info("Chat %s keyword is: %s", id, search)
 
     offset = 1
     # If user press "Stop":
     if search == 'Stop':
         await update.effective_message.reply_text("OK!")
-        await update.effective_message.reply_text("Write wich want to download.")
+        await update.effective_message.reply_text("Write wich you want to download.")
         await update.effective_message.reply_text("Or send /cancel to stop.")
         await update.effective_message.reply_text("e.g. 5 or 5, 3, 10...",
             reply_markup=ReplyKeyboardRemove()
@@ -184,8 +181,8 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
 
         # If user search a new keyword while is in wrong state
         if (search != globalvar[id][3]) & (globalvar[id][3] != ""):
-            await update.effective_message.reply_text("Finish this before start a new search, ok?")
-            await update.effective_message.reply_text("Write wich want to download or /cancel to stop")
+            await update.effective_message.reply_text("Finish this before start a new search, ok? Or /cancel to stop.")
+            await update.effective_message.reply_text("Write wich you want to download.")
             await update.effective_message.reply_text("e.g. 5 or 5, 3, 10...",
                 reply_markup=ReplyKeyboardRemove()
             )
@@ -223,7 +220,7 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
         return CHOOSE
 
     # Else print and store the info in globalvar
-    logger.info("There were %s torrents found.", len(foundtorrents))
+    logger.info("Chat %s founds %s torrents. (page=%s)", id, len(foundtorrents), offset)
     await update.effective_message.reply_text(
         "There were {0} torrents found:".format(len(foundtorrents))
     )
@@ -235,12 +232,19 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     ]]
 
     # Reply result (chunk_size = 30)
+    i = 0
     for torrent in foundtorrents:
-        await update.effective_message.reply_text(torrent)
+        # torrent = [i] - Name Of The Torrent
+        line = "<b>{torrent}</b> - <a href=\"{url}\">[URL]</a>".format(torrent=torrent, url=urls[i])
+        await update.effective_message.reply_text(line, parse_mode="HTML", disable_web_page_preview=True)
+        i = i+1
+
+
+
 
     # Check if found torrent are less than 30, so the search is finished
     if (len(foundtorrents)) < 30:
-        await update.effective_message.reply_text("OK! Write wich want to download.")
+        await update.effective_message.reply_text("OK! Write wich you want to download.")
         await update.effective_message.reply_text("Or send /cancel to stop.")
         await update.effective_message.reply_text("e.g. 5 or 5, 3, 10...",
         reply_markup=ReplyKeyboardRemove()
@@ -248,7 +252,7 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
         return CHOOSE
     
     # Otherwise ask to continue (offset+1) or stop the search (Continue / Stop inline button)
-    await update.effective_message.reply_text(text="Do you want to continue search?:\n",
+    await update.effective_message.reply_text(text="Do you want to continue search?",
         reply_markup=InlineKeyboardMarkup(inline_keyboard=inline_button)
     )
 
@@ -257,9 +261,8 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
 
 async def choose(update: Update, context: ContextTypes.context) -> int:
     """Select wich torrent download and call canfirm action"""
-    logger.info("CHOOSE state")
-    user = update.message.from_user
     id = update.message.chat_id
+    logger.info("Chat %s enter CHOOSE state", id)
 
     logger.info("Chat %s choose: %s", id, update.message.text)
     # print(update.message.text) #### < RISPOSTA DEL CLIENTE
@@ -268,7 +271,8 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
     # Check the string if not valid return CHOOSE state
     if len(res) == 0:
         await update.effective_message.reply_text("No! Input one or a list of numbers!")
-        await update.effective_message.reply_text("Write wich you want to download or /cancel to stop.",
+        await update.effective_message.reply_text("Write wich you want to download or /cancel to stop.")
+        await update.effective_message.reply_text("e.g. 5 or 5, 3, 10...",
             reply_markup=ReplyKeyboardRemove()
         )
 
@@ -277,9 +281,10 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
     # Reply all the result
     for i in res:
         try:
-            print("{res} - {url}".format(res=globalvar[id][0][int(i)], url= globalvar[id][2][int(i)]))
-            await update.effective_message.reply_text(
-                "{res} - {url}".format(res=globalvar[id][0][int(i)], url= globalvar[id][2][int(i)]),
+            #print("{res} - {url}".format(res=globalvar[id][0][int(i)], url= globalvar[id][2][int(i)]))
+            line = "{res} - {url}".format(res=globalvar[id][0][int(i)], url= globalvar[id][2][int(i)])
+            await update.effective_message.reply_text(line, 
+                parse_mode="HTML", disable_web_page_preview=False
             )
         except Exception as ex:
             await update.effective_message.reply_text("No! " + str(ex))
@@ -308,15 +313,15 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
 
 async def confirm(update: Update, context: ContextTypes.context) -> int:
     """Ask confirm before start download."""
-    logger.info("CONFIRM state")
     user = update.callback_query
     id = user.message.chat_id
 
+    logger.info("Chat %s enter CONFIRM state", id)
     logger.info("Chat %s selected: %s", id, user.data)
     #aggiungere controllo regex
     if user.data == "No":
         await update.effective_message.reply_text("Ok! Let's start again!")
-        await update.effective_message.reply_text("Input a keyword to search in ALL categories",
+        await update.effective_message.reply_text("Input a keyword to search in ALL categories:",
             reply_markup=ReplyKeyboardRemove(),
         )
 
@@ -335,12 +340,9 @@ async def confirm(update: Update, context: ContextTypes.context) -> int:
 
 async def cancel(update: Update, context: ContextTypes.context) -> int:
     """Cancels and ends the conversation."""
-    logger.info("CANCEL state")
-    user = update.message.from_user
     id = update.message.chat_id
+    logger.info("Chat %s enter CANCEL state", id)
     delete_id_information(id)
-
-    logger.info("Chat %s canceled the conversation.", id)
     await update.effective_message.reply_text("Bye! I hope we can talk again some day.")
     await update.effective_message.reply_text("Send /start to start over.",
         reply_markup=ReplyKeyboardRemove()
@@ -351,7 +353,7 @@ async def cancel(update: Update, context: ContextTypes.context) -> int:
 
 def store_id_information(id, foundtorrents, magnetlinks, urls, search, category, subcategory, select):
     """Store the conversation info as a global var list."""
-    logger.info("Calling store_id_information()")
+    logger.info("Chat %s call store_id_information()", id)
     global globalvar
 
     if id not in globalvar:
@@ -379,15 +381,15 @@ def store_id_information(id, foundtorrents, magnetlinks, urls, search, category,
 
 
 def delete_id_information(id):
-    logger.info("Calling delete_information()")
     global globalvar
     try:
         del globalvar[id]
+        logger.info("Chat %s call delete_information()", id)
     except:
         pass
 
 def create_id_information(id):
-    logger.info("Calling create_id_information()")
+    logger.info("Chat %s call create_id_information()", id)
     global globalvar
     globalvar[id] =["", "", "", "", "", "", ""]
 

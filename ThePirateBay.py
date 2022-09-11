@@ -117,7 +117,7 @@ class ThePirateBay:
 
         for torrent in self.torrents:
             #print("[{i}]".format(i=i), torrent)
-            line = "[{i}] - {torrent}".format(i=i, torrent=torrent)
+            line = "[#{i}] - {torrent}".format(i=i, torrent=torrent)
             foundtorrents.append(line)
             magnetlinks.append(torrent.magnetlink)
             url.append(torrent.url)
