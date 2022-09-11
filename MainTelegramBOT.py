@@ -41,6 +41,7 @@ from telegram.ext import (
     CommandHandler,
     CallbackQueryHandler
 )
+from StoreInformation import StoreInformation
 
 from ThePirateBay import ThePirateBay
 
@@ -55,7 +56,6 @@ CATEGORIES, SUBCATEGORIES, KEYWORD, CHOOSE, CONFIRM = range(5)
 foundtorrents = []
 magnetlinks = []
 urls = []
-globalvar = {"id": ["", "", "", "", "", "", ""]}
 
 #input_field_placeholder="e.g.  *artist* *album* *movie*" / e.g.  3 , 5, 12
 
@@ -82,7 +82,7 @@ async def categories(update: Update, context: ContextTypes.context) -> int:
     logger.info("Chat %s enter CATEGORIES state", id)
     logger.info("Chat %s category is: %s", id, user.data )
 
-    store_id_information(id, "", "", "", "", user.data, "", "")
+    store.store_id_information(id, "", "", "", "", user.data, "", "")
 
     if user.data == "ALL":
         await update.callback_query.message.reply_text("Ok! Now, input a keyword to search...",
@@ -104,7 +104,7 @@ async def skip_categories(update: Update, context: ContextTypes.context) -> int:
     """Skips the categories and asks for keyword."""
     id = update.message.chat_id
 
-    store_id_information(id, "", "", "", "", "", "", "")
+    store.store_id_information(id, "", "", "", "", "", "", "")
 
     logger.info("Chat %s did not set a category.", id)
     await update.effective_message.reply_text("Ok!")
@@ -124,7 +124,7 @@ async def subcategories(update: Update, context: ContextTypes.context) -> int:
     logger.info("Chat %s subcategory is: %s", id, user.data )
 
     # print(getattr(getattr(CATEGORIES, "AUDIO"), user.data)
-    store_id_information(id, "", "", "", "", "", user.data, "")
+    store.store_id_information(id, "", "", "", "", "", user.data, "")
 
     await update.callback_query.message.reply_text("I see!")
     await update.callback_query.message.reply_text("Now, input a keyword to search..."
@@ -136,7 +136,7 @@ async def subcategories(update: Update, context: ContextTypes.context) -> int:
 async def skip_subcategories(update: Update, context: ContextTypes.context) -> int:
     """Skips the categories and asks for keyword."""
     id = update.message.chat_id
-    store_id_information(id, "", "", "", "", "", "", "")
+    store.store_id_information(id, "", "", "", "", "", "", "")
     logger.info("Chat %s did not set a subcategory.", id)
     await update.effective_message.reply_text("Ok!")
     await update.effective_message.reply_text("Now, input a keyword to search...",
@@ -179,8 +179,9 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     except Exception:
         offset = 1
 
+        previoussearch = store.get_id_information(id, 3, "")
         # If user search a new keyword while is in wrong state
-        if (search != globalvar[id][3]) & (globalvar[id][3] != ""):
+        if (search != previoussearch) & (previoussearch != ""):
             await update.effective_message.reply_text("Finish this before start a new search, ok? Or /cancel to stop.")
             await update.effective_message.reply_text("Write wich you want to download.")
             await update.effective_message.reply_text("e.g. 5 or 5, 3, 10...",
@@ -189,8 +190,10 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
             return CHOOSE
 
     # Retrive the category (int)
-    category = str(globalvar[id][4])
-    subcategory = str(globalvar[id][5])
+    category = store.get_id_information(id, 4, "")
+    subcategory = store.get_id_information(id, 5, "")
+    # category = str(globalvar[id][4])
+    # subcategory = str(globalvar[id][5])
 
     if (category != "") & (subcategory != ""):
         await update.effective_message.reply_text("Searching \"{search}\" in category \"{category} - {subcategory}\"...".format(search=search, category=category, subcategory=subcategory))
@@ -202,7 +205,7 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     # Send pirate search command (keyword (str), page (int), category (int))
     foundtorrents, magnetlinks, urls = pirate.CustomizedSearch(search, offset, category, subcategory)
     # Store in global list the -torrents-magnet-url found, -sel blank.
-    store_id_information(id, foundtorrents, magnetlinks, urls, search, "", "", "")
+    store.store_id_information(id, foundtorrents, magnetlinks, urls, search, "", "", "")
 
     # Check if no torrents found return KEYWORD state
     if (len(foundtorrents)) == 0:
@@ -213,8 +216,8 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
                 reply_markup=ReplyKeyboardRemove()
             )
 
-            delete_id_information(id)
-            create_id_information(id)
+            store.delete_id_information(id)
+            store.create_id_information(id)
                        
             return KEYWORD
         return CHOOSE
@@ -281,8 +284,11 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
     # Reply all the result
     for i in res:
         try:
-            #print("{res} - {url}".format(res=globalvar[id][0][int(i)], url= globalvar[id][2][int(i)]))
-            line = "{res} - {url}".format(res=globalvar[id][0][int(i)], url= globalvar[id][2][int(i)])
+            res = str(store.get_id_information(id, 0, int(i)))
+            url = str(store.get_id_information(id, 2, int(i)))
+            # print("{res} - {url}".format(res=globalvar[id][0][int(i)], url= globalvar[id][2][int(i)]))
+            # line = "{res} - {url}".format(res=globalvar[id][0][int(i)], url= globalvar[id][2][int(i)])
+            line = "{res} - {url}".format(res=res, url= url)
             await update.effective_message.reply_text(line, 
                 parse_mode="HTML", disable_web_page_preview=False
             )
@@ -296,7 +302,7 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
             return CHOOSE
 
     # Else store the items to download in a list
-    store_id_information(id, "", "", "", "", "", "", res)
+    store.store_id_information(id, "", "", "", "", "", "", res)
 
     inline_button = [[
         InlineKeyboardButton(text="Yes", callback_data="Yes"),
@@ -314,22 +320,25 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
 async def confirm(update: Update, context: ContextTypes.context) -> int:
     """Ask confirm before start download."""
     user = update.callback_query
+    
     try:
         id = user.message.chat_id
+        search = user.data
     except:
         id = update.message.chat_id
+        search = update.message.text
 
     logger.info("Chat %s enter CONFIRM state", id)
-    logger.info("Chat %s selected: %s", id, user.data)
+    logger.info("Chat %s selected: %s", id, search)
     #aggiungere controllo regex
-    if user.data == "No":
+    if search == "No":
         await update.effective_message.reply_text("Ok! Let's start again!")
         await update.effective_message.reply_text("Input a keyword to search in ALL categories:",
             reply_markup=ReplyKeyboardRemove(),
         )
 
-        delete_id_information(id)
-        create_id_information(id)
+        store.delete_id_information(id)
+        store.create_id_information(id)
 
         return KEYWORD
 
@@ -345,56 +354,13 @@ async def cancel(update: Update, context: ContextTypes.context) -> int:
     """Cancels and ends the conversation."""
     id = update.message.chat_id
     logger.info("Chat %s enter CANCEL state", id)
-    delete_id_information(id)
+    store.delete_id_information(id)
     await update.effective_message.reply_text("Bye! I hope we can talk again some day.")
     await update.effective_message.reply_text("Send /start to start over.",
         reply_markup=ReplyKeyboardRemove()
     )
 
     return ConversationHandler.END
-
-
-def store_id_information(id, foundtorrents, magnetlinks, urls, search, category, subcategory, select):
-    """Store the conversation info as a global var list."""
-    logger.info("Chat %s call store_id_information()", id)
-    global globalvar
-
-    if id not in globalvar:
-        create_id_information(id)
-
-    if (foundtorrents != "") & (magnetlinks != "") & (urls != "") & (search != ""):
-        if (globalvar[id][0] == "") & (globalvar[id][1] == "") & (globalvar[id][2]  == ""):
-            globalvar[id][0] = foundtorrents
-            globalvar[id][1] = magnetlinks
-            globalvar[id][2] = urls
-            globalvar[id][3] = search
-        elif (globalvar[id][0] != "") & (globalvar[id][1] != "") & (globalvar[id][2] != ""):
-            globalvar[id][0] += foundtorrents
-            globalvar[id][1] += magnetlinks
-            globalvar[id][2] += urls
-
-    elif (foundtorrents == "") & (magnetlinks == "") & (urls == "") & (search == "") & (category != "") & (subcategory == "") & (select == ""):
-        globalvar[id][4] = category
-
-    elif (foundtorrents == "") & (magnetlinks == "") & (urls == "") & (search == "") & (category == "") & (subcategory != "") & (select == ""):
-        globalvar[id][5] = subcategory
-
-    elif (foundtorrents == "") & (magnetlinks == "") & (urls == "") & (search == "") & (category == "") & (subcategory == "") & (select != ""):
-        globalvar[id][6] = select
-
-
-def delete_id_information(id):
-    global globalvar
-    try:
-        del globalvar[id]
-        logger.info("Chat %s call delete_information()", id)
-    except:
-        pass
-
-def create_id_information(id):
-    logger.info("Chat %s call create_id_information()", id)
-    global globalvar
-    globalvar[id] =["", "", "", "", "", "", ""]
 
 
 
@@ -442,4 +408,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     pirate = ThePirateBay()
+    store = StoreInformation()
     main()
