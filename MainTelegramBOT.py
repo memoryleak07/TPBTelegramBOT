@@ -215,6 +215,10 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
             await update.effective_message.reply_text("Try input a new keyword to search...",
                 reply_markup=ReplyKeyboardRemove()
             )
+
+            delete_id_information(id)
+            create_id_information(id)
+                       
             return KEYWORD
         return CHOOSE
 
@@ -388,20 +392,6 @@ def create_id_information(id):
     globalvar[id] =["", "", "", "", "", "", ""]
 
 
-async def status(update: Update, context: ContextTypes.context) -> int:
-    """Starts the conversation and asks the user about categories."""
-    logger.info("STATUS state")
-
-    await update.effective_message.reply_text("Hi! I'm STATUS.")
-    # inline_button = pirate.GetInlineAllCategories()
-    # await update.effective_message.reply_text("Select a category or /skip.")
-    # await update.effective_message.reply_text("Send /cancel /start to restart conversation.",
-    #     reply_markup=InlineKeyboardMarkup(inline_keyboard=inline_button, resize_keyboard=True)
-    # )
-
-    return ConversationHandler.END
-
-
 
 def main() -> None:
     """Run the bot."""
@@ -439,13 +429,12 @@ def main() -> None:
     application.add_handler(conv_handler)
 
     # Torrent integration:
-    # application.add_handler(CommandHandler("restart", start))
+    # application.add_handler(CommandHandler("restart", restart))
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling()
 
 
 if __name__ == "__main__":
-    # main()
     pirate = ThePirateBay()
     main()
