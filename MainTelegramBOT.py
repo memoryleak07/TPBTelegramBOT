@@ -314,7 +314,10 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
 async def confirm(update: Update, context: ContextTypes.context) -> int:
     """Ask confirm before start download."""
     user = update.callback_query
-    id = user.message.chat_id
+    try:
+        id = user.message.chat_id
+    except:
+        id = update.message.chat_id
 
     logger.info("Chat %s enter CONFIRM state", id)
     logger.info("Chat %s selected: %s", id, user.data)
