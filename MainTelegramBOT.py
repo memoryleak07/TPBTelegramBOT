@@ -281,17 +281,19 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
 
         return CHOOSE
 
-    # Reply all the result
+    # And store the items to in the dictionary 
+    store.store_id_information(id, "", "", "", "", "", "", res)
+
+    # Reply to user all the result
     for i in res:
         try:
             res = str(store.get_id_information(id, 0, int(i)))
             url = str(store.get_id_information(id, 2, int(i)))
-            # print("{res} - {url}".format(res=globalvar[id][0][int(i)], url= globalvar[id][2][int(i)]))
-            # line = "{res} - {url}".format(res=globalvar[id][0][int(i)], url= globalvar[id][2][int(i)])
             line = "{res} - {url}".format(res=res, url= url)
             await update.effective_message.reply_text(line, 
                 parse_mode="HTML", disable_web_page_preview=False
             )
+        # Avoid user error:
         except Exception as ex:
             await update.effective_message.reply_text("No! " + str(ex))
             await update.effective_message.reply_text("Write wich you want do download or /cancel to stop.")
@@ -301,8 +303,7 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
 
             return CHOOSE
 
-    # Else store the items to download in a list
-    store.store_id_information(id, "", "", "", "", "", "", res)
+
 
     inline_button = [[
         InlineKeyboardButton(text="Yes", callback_data="Yes"),
@@ -330,7 +331,8 @@ async def confirm(update: Update, context: ContextTypes.context) -> int:
 
     logger.info("Chat %s enter CONFIRM state", id)
     logger.info("Chat %s selected: %s", id, search)
-    #aggiungere controllo regex
+
+    # If user press No return to KEYWORD
     if search == "No":
         await update.effective_message.reply_text("Ok! Let's start again!")
         await update.effective_message.reply_text("Input a keyword to search in ALL categories:",
@@ -341,6 +343,20 @@ async def confirm(update: Update, context: ContextTypes.context) -> int:
         store.create_id_information(id)
 
         return KEYWORD
+
+    # Otherwise send magnet links to the downloader bot
+    elif search == "Yes":
+        sel = (store.get_id_information(id, 6, ""))
+        magnetlinks = (store.get_id_information(id, 1, ""))
+        todownload = []
+        for i in sel:
+            todownload.append(InlineKeyboardButton(text=magnetlinks[int(i)], callback_data="test"))
+            #todownload.append(magnetlinks[int(i)])
+
+    await update.effective_message.reply_text(text="Here magnet links:",
+        reply_markup = InlineKeyboardMarkup(inline_keyboard=[todownload])
+    )      
+
 
     await update.effective_message.reply_text("My job is done! I hope it was helpful.")
     await update.effective_message.reply_text("Send /start to start over.",
@@ -380,7 +396,6 @@ def main() -> None:
                 CallbackQueryHandler(subcategories),
                 CommandHandler("skip", skip_subcategories),
             ],
-            #KEYWORD: [MessageHandler(filters.TEXT & ~filters.COMMAND, keyword)],
             KEYWORD: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, keyword),
                 CallbackQueryHandler(keyword)

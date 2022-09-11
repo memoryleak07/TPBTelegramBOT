@@ -48,8 +48,8 @@ class StoreInformation:
         """Get the info for user interaction"""
         global globalvar
         if pointer != "":
-            return str(globalvar[id][index][pointer])
-        return str(globalvar[id][index])
+            return (globalvar[id][index][pointer])
+        return (globalvar[id][index])
 
 
     def delete_id_information(self, id:str):
