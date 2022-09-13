@@ -238,9 +238,13 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     i = 0
     for torrent in foundtorrents:
         # torrent = [i] - Name Of The Torrent
-        line = "<b>{torrent}</b> - <a href=\"{url}\">[URL]</a>".format(torrent=torrent, url=urls[i])
-        await update.effective_message.reply_text(line, parse_mode="HTML", disable_web_page_preview=True)
-        i = i+1
+        try:
+            line = "<b>{torrent}</b> - <a href=\"{url}\">[URL]</a>".format(torrent=torrent, url=urls[i])
+            await update.effective_message.reply_text(line, parse_mode="HTML", disable_web_page_preview=True)
+            i = i+1
+        except:
+            line = line.replace("<b>", "").replace("</b>", "").replace("<a href=\"", "").replace("\">[URL]</a>", "")
+            await update.effective_message.reply_text(line, disable_web_page_preview=True)
 
 
 
@@ -266,7 +270,6 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
     """Select wich torrent download and call canfirm action"""
     id = update.message.chat_id
     logger.info("Chat %s enter CHOOSE state", id)
-
     logger.info("Chat %s choose: %s", id, update.message.text)
     # print(update.message.text) #### < RISPOSTA DEL CLIENTE
     # Convert user response in numeric list
@@ -293,8 +296,13 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
             await update.effective_message.reply_text(line, 
                 parse_mode="HTML", disable_web_page_preview=False
             )
-        # Avoid user error:
         except Exception as ex:
+            line.replace("<b>", "").replace("</b>", "").replace("<a href=\"", "").replace("\">[URL]</a>", "")
+            await update.effective_message.reply_text(line, 
+                disable_web_page_preview=False
+            )
+        # Avoid user error:
+        except:
             await update.effective_message.reply_text("No! " + str(ex))
             await update.effective_message.reply_text("Write wich you want do download or /cancel to stop.")
             await update.effective_message.reply_text("e.g. 5 or 5, 3, 10...",
@@ -303,14 +311,11 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
 
             return CHOOSE
 
-
-
     inline_button = [[
         InlineKeyboardButton(text="Yes", callback_data="Yes"),
         InlineKeyboardButton(text="No", callback_data="No"),
     ]]
     
-
     await update.effective_message.reply_text(text="Please confirm the selected torrent:",
         reply_markup = InlineKeyboardMarkup(inline_keyboard=inline_button)
     )
