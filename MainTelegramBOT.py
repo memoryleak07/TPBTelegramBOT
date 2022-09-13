@@ -29,6 +29,7 @@ https://t.me/noncapiscocosastasuccedendobot
 
 import re
 import logging
+from turtle import forward
 from telegram import ReplyKeyboardRemove, Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import (
     Application,
@@ -83,7 +84,8 @@ async def categories(update: Update, context: ContextTypes.context) -> int:
     store.store_id_information(id, "", "", "", "", user.data, "", "")
 
     if user.data == "ALL":
-        await update.callback_query.message.reply_text("Ok! Now, input a keyword to search...",
+        await update.callback_query.message.reply_text("Ok!")
+        await update.callback_query.message.reply_text("Now, input a keyword to search...",
         reply_markup=ReplyKeyboardRemove()
         )
 
@@ -200,7 +202,7 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
 
     # Send pirate search command (keyword (str), page (int), category (int))
     foundtorrents, magnetlinks, urls = pirate.CustomizedSearch(search, offset, category, subcategory)
-    # Store in global list the -torrents-magnet-url found, -sel blank.
+    # Store in dict search and all results
     store.store_id_information(id, foundtorrents, magnetlinks, urls, search, "", "", "")
 
     # Check if no torrents found return KEYWORD state
@@ -223,14 +225,8 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     await update.effective_message.reply_text(
         "There were {0} torrents found:".format(len(foundtorrents))
     )
-    # Reply to user all link found, 30 each step
-    yesText = "Continue-{search}-{offset}".format(search=search,offset=str(offset+1))
-    inline_button = [[
-        InlineKeyboardButton(text="Next Page >", callback_data=yesText),
-        InlineKeyboardButton(text="Stop", callback_data="Stop"),
-    ]]
 
-    # Reply result (chunk_size = 30)
+    # Reply result to user all link found, 30 each step
     i = 0
     for torrent in foundtorrents:
         # torrent = [i] - Name Of The Torrent
@@ -249,9 +245,16 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
         await update.effective_message.reply_text("e.g. 5 or 5, 3, 10...",
         reply_markup=ReplyKeyboardRemove()
         )
+
         return CHOOSE
-    
+
     # Otherwise ask to continue (offset+1) or stop the search (Continue / Stop inline button)
+    yesText = "Continue-{search}-{offset}".format(search=search,offset=str(offset+1))
+    inline_button = [[
+        InlineKeyboardButton(text="Next Page >", callback_data=yesText),
+        InlineKeyboardButton(text="Stop", callback_data="Stop"),
+    ]]
+
     await update.effective_message.reply_text(text="Do you want to continue search?",
         reply_markup=InlineKeyboardMarkup(inline_keyboard=inline_button)
     )
@@ -353,20 +356,16 @@ async def confirm(update: Update, context: ContextTypes.context) -> int:
         sel = (store.get_id_information(id, 6, ""))
         magnetlinks = (store.get_id_information(id, 1, ""))
         todownload = []
+        send_message_to_bot(id, "/start")
         try:
             for i in sel:
-                todownload.append(InlineKeyboardButton(text=magnetlinks[int(i)], callback_data="test"))
-                #todownload.append(magnetlinks[int(i)])
+                todownload.append(magnetlinks[int(i)])
+                # todownload.append(InlineKeyboardButton(text=magnetlinks[int(i)], callback_data="test"))
         except Exception as ex:
             logger.warning("Chat %s for input \"%s\": %s", id, search, str(ex))
             await update.effective_message.reply_text("Warning! For input \"" + search + "\": "  + str(ex) 
             )
-    
-    await update.effective_message.reply_text(text="Ok!")
-    await update.effective_message.reply_text(text="Here magnet links:",
-        reply_markup = InlineKeyboardMarkup(inline_keyboard=[todownload])
-    )      
-
+        
 
     await update.effective_message.reply_text("My job is done! I hope it was helpful.")
     await update.effective_message.reply_text("Send /start to start over.",
@@ -374,6 +373,14 @@ async def confirm(update: Update, context: ContextTypes.context) -> int:
     )
 
     return ConversationHandler.END
+
+
+def send_message_to_bot(id, text):    
+    import requests
+    token = "5719516099:AAH4uY5LO_NiVWuTREuA89WGiUUawjSVof0"      
+    url_req = "https://api.telegram.org/bot" + token + "/sendMessage" + "?chat_id=" + str(id) + "&text=" + text 
+    results = requests.get(url_req)
+    print(results.json())
 
 
 async def cancel(update: Update, context: ContextTypes.context) -> int:
