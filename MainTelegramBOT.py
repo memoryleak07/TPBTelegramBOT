@@ -27,7 +27,6 @@ https://t.me/noncapiscocosastasuccedendobot
 #         f"visit https://docs.python-telegram-bot.org/en/v{TG_VER}/examples.html"
 #     )
 
-
 import re
 import logging
 from telegram import ReplyKeyboardRemove, Update, InlineKeyboardMarkup, InlineKeyboardButton
@@ -42,7 +41,6 @@ from telegram.ext import (
     CallbackQueryHandler
 )
 from StoreInformation import StoreInformation
-
 from ThePirateBay import ThePirateBay
 
 # Enable logging
@@ -56,8 +54,8 @@ CATEGORIES, SUBCATEGORIES, KEYWORD, CHOOSE, CONFIRM = range(5)
 foundtorrents = []
 magnetlinks = []
 urls = []
-
 #input_field_placeholder="e.g.  *artist* *album* *movie*" / e.g.  3 , 5, 12
+
 
 async def start(update: Update, context: ContextTypes.context) -> int:
     """Starts the conversation and asks the user about categories."""
@@ -178,10 +176,10 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
         search = search.split('-')[1]
     except Exception:
         offset = 1
-
         previoussearch = store.get_id_information(id, 3, "")
         # If user search a new keyword while is in wrong state
         if (search != previoussearch) & (previoussearch != ""):
+            logger.warning("Chat %s did not select a valid input (%s).", id, str(search))
             await update.effective_message.reply_text("Finish this before start a new search, ok? Or /cancel to stop.")
             await update.effective_message.reply_text("Write wich you want to download.")
             await update.effective_message.reply_text("e.g. 5 or 5, 3, 10...",
@@ -189,11 +187,9 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
             )
             return CHOOSE
 
-    # Retrive the category (int)
-    category = store.get_id_information(id, 4, "")
-    subcategory = store.get_id_information(id, 5, "")
-    # category = str(globalvar[id][4])
-    # subcategory = str(globalvar[id][5])
+    # Retrive the category
+    category = store.get_id_information(id, 4, "")      #globalvar[id][4]
+    subcategory = store.get_id_information(id, 5, "")   #globalvar[id][5]
 
     if (category != "") & (subcategory != ""):
         await update.effective_message.reply_text("Searching \"{search}\" in category \"{category} - {subcategory}\"...".format(search=search, category=category, subcategory=subcategory))
@@ -246,9 +242,6 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
             line = line.replace("<b>", "").replace("</b>", "").replace("<a href=\"", "").replace("\">[URL]</a>", "")
             await update.effective_message.reply_text(line, disable_web_page_preview=True)
 
-
-
-
     # Check if found torrent are less than 30, so the search is finished
     if (len(foundtorrents)) < 30:
         await update.effective_message.reply_text("OK! Write wich you want to download.")
@@ -271,11 +264,11 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
     id = update.message.chat_id
     logger.info("Chat %s enter CHOOSE state", id)
     logger.info("Chat %s choose: %s", id, update.message.text)
-    # print(update.message.text) #### < RISPOSTA DEL CLIENTE
     # Convert user response in numeric list
     res = re.findall(r'\d+', update.message.text)
     # Check the string if not valid return CHOOSE state
     if len(res) == 0:
+        logger.warning("Chat %s did not select a valid input.", id)
         await update.effective_message.reply_text("No! Input one or a list of numbers!")
         await update.effective_message.reply_text("Write wich you want to download or /cancel to stop.")
         await update.effective_message.reply_text("e.g. 5 or 5, 3, 10...",
@@ -284,32 +277,29 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
 
         return CHOOSE
 
-    # And store the items to in the dictionary 
-    store.store_id_information(id, "", "", "", "", "", "", res)
-
     # Reply to user all the result
     for i in res:
         try:
-            res = str(store.get_id_information(id, 0, int(i)))
+            resp = str(store.get_id_information(id, 0, int(i)))
             url = str(store.get_id_information(id, 2, int(i)))
-            line = "{res} - {url}".format(res=res, url= url)
-            await update.effective_message.reply_text(line, 
-                parse_mode="HTML", disable_web_page_preview=False
-            )
-        except Exception as ex:
-            line.replace("<b>", "").replace("</b>", "").replace("<a href=\"", "").replace("\">[URL]</a>", "")
-            await update.effective_message.reply_text(line, 
-                disable_web_page_preview=False
-            )
+            line = "{resp} - {url}".format(resp=resp, url= url)
+            await update.effective_message.reply_text(line)
         # Avoid user error:
-        except:
-            await update.effective_message.reply_text("No! " + str(ex))
-            await update.effective_message.reply_text("Write wich you want do download or /cancel to stop.")
-            await update.effective_message.reply_text("e.g. 5 or 5, 3, 10...",
-                reply_markup=ReplyKeyboardRemove()
-            )
+        except Exception as ex:
+            res.remove(i)
+            logger.warning("Chat %s for input \"%s\": %s", id, str(i) , str(ex))
+            await update.effective_message.reply_text("Warning! For input \"" + str(i) + "\": " + str(ex))
 
-            return CHOOSE
+    # And store the items to download in the dictionary if lenght NOT zero
+    if len(res) == 0:
+        logger.warning("Chat %s did not select a valid input.", id)
+        await update.effective_message.reply_text("Write wich you want do download or /cancel to stop.")
+        await update.effective_message.reply_text("e.g. 5 or 5, 3, 10...",
+            reply_markup=ReplyKeyboardRemove()
+        )
+        return CHOOSE
+        
+    store.store_id_information(id, "", "", "", "", "", "", res)
 
     inline_button = [[
         InlineKeyboardButton(text="Yes", callback_data="Yes"),
@@ -326,7 +316,7 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
 async def confirm(update: Update, context: ContextTypes.context) -> int:
     """Ask confirm before start download."""
     user = update.callback_query
-    
+
     try:
         id = user.message.chat_id
         search = user.data
@@ -335,12 +325,21 @@ async def confirm(update: Update, context: ContextTypes.context) -> int:
         search = update.message.text
 
     logger.info("Chat %s enter CONFIRM state", id)
+
+    if (search != "Yes") and (search != "No"):
+        logger.warning("Chat %s did not select a valid input (%s): (Yes or No)", id, str(search))
+        await update.effective_message.reply_text("Error! Just select \"Yes\" or \"No\""
+        )
+
+        return CONFIRM
+
     logger.info("Chat %s selected: %s", id, search)
 
     # If user press No return to KEYWORD
     if search == "No":
         await update.effective_message.reply_text("Ok! Let's start again!")
-        await update.effective_message.reply_text("Input a keyword to search in ALL categories:",
+        await update.effective_message.reply_text("Send /cancel to stop.")
+        await update.effective_message.reply_text("Or input a keyword to search in ALL categories:",
             reply_markup=ReplyKeyboardRemove(),
         )
 
@@ -354,10 +353,16 @@ async def confirm(update: Update, context: ContextTypes.context) -> int:
         sel = (store.get_id_information(id, 6, ""))
         magnetlinks = (store.get_id_information(id, 1, ""))
         todownload = []
-        for i in sel:
-            todownload.append(InlineKeyboardButton(text=magnetlinks[int(i)], callback_data="test"))
-            #todownload.append(magnetlinks[int(i)])
-
+        try:
+            for i in sel:
+                todownload.append(InlineKeyboardButton(text=magnetlinks[int(i)], callback_data="test"))
+                #todownload.append(magnetlinks[int(i)])
+        except Exception as ex:
+            logger.warning("Chat %s for input \"%s\": %s", id, search, str(ex))
+            await update.effective_message.reply_text("Warning! For input \"" + search + "\": "  + str(ex) 
+            )
+    
+    await update.effective_message.reply_text(text="Ok!")
     await update.effective_message.reply_text(text="Here magnet links:",
         reply_markup = InlineKeyboardMarkup(inline_keyboard=[todownload])
     )      
@@ -382,7 +387,6 @@ async def cancel(update: Update, context: ContextTypes.context) -> int:
     )
 
     return ConversationHandler.END
-
 
 
 def main() -> None:
@@ -418,9 +422,6 @@ def main() -> None:
     )
 
     application.add_handler(conv_handler)
-
-    # Torrent integration:
-    # application.add_handler(CommandHandler("restart", restart))
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling()
