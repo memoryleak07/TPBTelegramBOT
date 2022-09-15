@@ -26,7 +26,8 @@ https://t.me/noncapiscocosastasuccedendobot
 #         f"{TG_VER} version of this example, "
 #         f"visit https://docs.python-telegram-bot.org/en/v{TG_VER}/examples.html"
 #     )
-
+from QBitTorrent import QBitTorrent
+import time
 import re
 import logging
 from turtle import forward
@@ -41,6 +42,7 @@ from telegram.ext import (
     CommandHandler,
     CallbackQueryHandler
 )
+from QBitTorrent import QBitTorrent
 from StoreInformation import StoreInformation
 from ThePirateBay import ThePirateBay
 
@@ -356,31 +358,38 @@ async def confirm(update: Update, context: ContextTypes.context) -> int:
         sel = (store.get_id_information(id, 6, ""))
         magnetlinks = (store.get_id_information(id, 1, ""))
         todownload = []
-        send_message_to_bot(id, "/start")
         try:
             for i in sel:
                 todownload.append(magnetlinks[int(i)])
-                # todownload.append(InlineKeyboardButton(text=magnetlinks[int(i)], callback_data="test"))
         except Exception as ex:
             logger.warning("Chat %s for input \"%s\": %s", id, search, str(ex))
             await update.effective_message.reply_text("Warning! For input \"" + search + "\": "  + str(ex) 
             )
         
+    qbit.DownloadTorrentLink(todownload)
+    store.delete_id_information(id)
 
     await update.effective_message.reply_text("My job is done! I hope it was helpful.")
-    await update.effective_message.reply_text("Send /start to start over.",
+    await update.effective_message.reply_text("You can send /status to check current downloads information.",
         reply_markup=ReplyKeyboardRemove(),
     )
 
     return ConversationHandler.END
 
 
-def send_message_to_bot(id, text):    
-    import requests
-    token = "5719516099:AAH4uY5LO_NiVWuTREuA89WGiUUawjSVof0"      
-    url_req = "https://api.telegram.org/bot" + token + "/sendMessage" + "?chat_id=" + str(id) + "&text=" + text 
-    results = requests.get(url_req)
-    print(results.json())
+
+async def status(update: Update, context: ContextTypes.context) -> int:
+    """Starts the conversation and asks the user about categories."""
+    id = update.message.chat_id
+    logger.info("Chat %s enter STATUS state", id)
+    localdownloads = qbit.GetTorrentInformation()
+    for torrent in localdownloads:
+        await update.effective_message.reply_text(torrent)
+
+    return ConversationHandler.END
+
+
+
 
 
 async def cancel(update: Update, context: ContextTypes.context) -> int:
@@ -423,13 +432,13 @@ def main() -> None:
             CONFIRM: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, confirm),
                 CallbackQueryHandler(confirm)
-            ],
+            ]
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
 
     application.add_handler(conv_handler)
-
+    application.add_handler(CommandHandler("status", status))
     # Run the bot until the user presses Ctrl-C
     application.run_polling()
 
@@ -437,4 +446,5 @@ def main() -> None:
 if __name__ == "__main__":
     pirate = ThePirateBay()
     store = StoreInformation()
+    qbit = QBitTorrent()
     main()
