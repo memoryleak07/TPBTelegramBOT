@@ -1,12 +1,6 @@
-        # ## Specifing save path for downloads:
-        # self.qb.download_from_link(magnet_link, savepath="path")
-
-        # # Applying labels to downloads:
-        # self.qb.download_from_link(magnet_link, category='anime')
-
 from qbittorrent import Client
 
-CLIENT = 'http://127.0.0.1:8080/'
+CLIENT = 'http://127.0.0.1:8080'
 USER = "admin"
 PASSWORD = "adminadmin"
 
@@ -31,13 +25,12 @@ class QBitTorrent:
         self.qb.torrents(filter='downloading', category='my category')
         # self.torrents(filter='paused', sort='ratio')
 
-    def DownloadTorrentLink(self, link_list:list):
+    def DownloadTorrentFromLink(self, link_list:list):
         self.qb.download_from_link(link_list)
-        # No matter the link is correct or not,
-        # method will always return empty JSON object.
+        # No matter the link is correct or not, method will always return empty JSON object.
 
 
-    def GetTorrentInformation(self):
+    def GetLocalsTorrentInformation(self):
 
         def get_size_format(b, factor=1024, suffix="B"):
             """

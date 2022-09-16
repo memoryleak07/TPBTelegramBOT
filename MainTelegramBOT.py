@@ -26,11 +26,9 @@ https://t.me/noncapiscocosastasuccedendobot
 #         f"{TG_VER} version of this example, "
 #         f"visit https://docs.python-telegram-bot.org/en/v{TG_VER}/examples.html"
 #     )
-from QBitTorrent import QBitTorrent
-import time
+
 import re
 import logging
-from turtle import forward
 from telegram import ReplyKeyboardRemove, Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import (
     Application,
@@ -42,9 +40,12 @@ from telegram.ext import (
     CommandHandler,
     CallbackQueryHandler
 )
+
+from ConfigureBOT import configure
 from QBitTorrent import QBitTorrent
 from StoreInformation import StoreInformation
 from ThePirateBay import ThePirateBay
+
 
 # Enable logging
 logging.basicConfig(
@@ -70,8 +71,9 @@ async def start(update: Update, context: ContextTypes.context) -> int:
     await update.effective_message.reply_text("Hi! I'm Bot.")
     await update.effective_message.reply_text("Select a category or /skip.")
     await update.effective_message.reply_text("Send /cancel /start to restart conversation.",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=inline_button, resize_keyboard=True)
-    )
+                                              reply_markup=InlineKeyboardMarkup(
+                                                  inline_keyboard=inline_button, resize_keyboard=True)
+                                              )
 
     return CATEGORIES
 
@@ -81,23 +83,24 @@ async def categories(update: Update, context: ContextTypes.context) -> int:
     user = update.callback_query
     id = user.message.chat_id
     logger.info("Chat %s enter CATEGORIES state", id)
-    logger.info("Chat %s category is: %s", id, user.data )
+    logger.info("Chat %s category is: %s", id, user.data)
 
     store.store_id_information(id, "", "", "", "", user.data, "", "")
 
     if user.data == "ALL":
         await update.callback_query.message.reply_text("Ok!")
         await update.callback_query.message.reply_text("Now, input a keyword to search...",
-        reply_markup=ReplyKeyboardRemove()
-        )
+                                                       reply_markup=ReplyKeyboardRemove()
+                                                       )
 
         return KEYWORD
 
-    inline_button  = pirate.GetInlineSubCategories(user.data)
+    inline_button = pirate.GetInlineSubCategories(user.data)
 
     await update.callback_query.message.reply_text("Select a subcategory or /skip: ",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=inline_button, resize_keyboard=True)
-    )
+                                                   reply_markup=InlineKeyboardMarkup(
+                                                       inline_keyboard=inline_button, resize_keyboard=True)
+                                                   )
 
     return SUBCATEGORIES
 
@@ -111,8 +114,8 @@ async def skip_categories(update: Update, context: ContextTypes.context) -> int:
     logger.info("Chat %s did not set a category.", id)
     await update.effective_message.reply_text("Ok!")
     await update.effective_message.reply_text("Now, input a keyword to search...",
-        reply_markup=ReplyKeyboardRemove()
-    )
+                                              reply_markup=ReplyKeyboardRemove()
+                                              )
 
     return KEYWORD
 
@@ -123,14 +126,14 @@ async def subcategories(update: Update, context: ContextTypes.context) -> int:
     id = user.message.chat_id
 
     logger.info("Chat %s enter SUBCATEGORIES state", id)
-    logger.info("Chat %s subcategory is: %s", id, user.data )
+    logger.info("Chat %s subcategory is: %s", id, user.data)
 
     # print(getattr(getattr(CATEGORIES, "AUDIO"), user.data)
     store.store_id_information(id, "", "", "", "", "", user.data, "")
 
     await update.callback_query.message.reply_text("I see!")
     await update.callback_query.message.reply_text("Now, input a keyword to search..."
-    )
+                                                   )
 
     return KEYWORD
 
@@ -142,8 +145,8 @@ async def skip_subcategories(update: Update, context: ContextTypes.context) -> i
     logger.info("Chat %s did not set a subcategory.", id)
     await update.effective_message.reply_text("Ok!")
     await update.effective_message.reply_text("Now, input a keyword to search...",
-        reply_markup=ReplyKeyboardRemove()
-    )
+                                              reply_markup=ReplyKeyboardRemove()
+                                              )
 
     return KEYWORD
 
@@ -169,12 +172,12 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
         await update.effective_message.reply_text("Write wich you want to download.")
         await update.effective_message.reply_text("Or send /cancel to stop.")
         await update.effective_message.reply_text("e.g. 5 or 5, 3, 10...",
-            reply_markup=ReplyKeyboardRemove()
-        )
+                                                  reply_markup=ReplyKeyboardRemove()
+                                                  )
 
         return CHOOSE
 
-    # Else try to retrieve keyword and offset (page) from resp. If Except set page = 1, 
+    # Else try to retrieve keyword and offset (page) from resp. If Except set page = 1,
     try:
         offset = int(search.split('-')[2])
         search = search.split('-')[1]
@@ -183,18 +186,20 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
         previoussearch = store.get_id_information(id, 3, "")
         # If user search a new keyword while is in wrong state
         if (search != previoussearch) & (previoussearch != ""):
-            logger.warning("Chat %s did not select a valid input (%s).", id, str(search))
+            logger.warning(
+                "Chat %s did not select a valid input (%s).", id, str(search))
             await update.effective_message.reply_text("Finish this before start a new search, ok? Or /cancel to stop.")
             await update.effective_message.reply_text("Write wich you want to download.")
             await update.effective_message.reply_text("e.g. 5 or 5, 3, 10...",
-                reply_markup=ReplyKeyboardRemove()
-            )
+                                                      reply_markup=ReplyKeyboardRemove()
+                                                      )
             return CHOOSE
 
     # Retrive the category
-    category = store.get_id_information(id, 4, "")      #globalvar[id][4]
-    subcategory = store.get_id_information(id, 5, "")   #globalvar[id][5]
+    category = store.get_id_information(id, 4, "")  # globalvar[id][4]
+    subcategory = store.get_id_information(id, 5, "")  # globalvar[id][5]
 
+    # Print info about search
     if (category != "") & (subcategory != ""):
         await update.effective_message.reply_text("Searching \"{search}\" in category \"{category} - {subcategory}\"...".format(search=search, category=category, subcategory=subcategory))
     elif (category != "") & (subcategory == ""):
@@ -202,28 +207,39 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     elif category == "":
         await update.effective_message.reply_text("Searching \"{search}\" in \"ALL\" categories...".format(search=search))
 
-    # Send pirate search command (keyword (str), page (int), category (int))
-    foundtorrents, magnetlinks, urls = pirate.CustomizedSearch(search, offset, category, subcategory)
-    # Store in dict search and all results
-    store.store_id_information(id, foundtorrents, magnetlinks, urls, search, "", "", "")
+    try:
+        # Send pirate search command (keyword (str), page (int), category (int))
+        foundtorrents, magnetlinks, urls = pirate.CustomizedSearch(
+            search, offset, category, subcategory)
+        # Store in dict search and all results
+        store.store_id_information(
+            id, foundtorrents, magnetlinks, urls, search, "", "", "")
+
+    except Exception as ex:
+        logger.error("Chat %s: %s", id, str(ex))
+        await update.effective_message.reply_text(str(ex), disable_web_page_preview=True)
+        await update.effective_message.reply_text("Send /cancel to stop.")
+
+        return KEYWORD
 
     # Check if no torrents found return KEYWORD state
     if (len(foundtorrents)) == 0:
         if offset == 1:
-            logger.info("No torrents found :-(")
+            logger.info("Chat %s no torrent found.", id)
             await update.effective_message.reply_text("No torrents found :-(")
             await update.effective_message.reply_text("Try input a new keyword to search...",
-                reply_markup=ReplyKeyboardRemove()
-            )
-
+                                                      reply_markup=ReplyKeyboardRemove()
+                                                      )
             store.delete_id_information(id)
             store.create_id_information(id)
-                       
+
             return KEYWORD
+
         return CHOOSE
 
     # Else print and store the info in globalvar
-    logger.info("Chat %s founds %s torrents. (page=%s)", id, len(foundtorrents), offset)
+    logger.info("Chat %s founds %s torrents. (page=%s)",
+                id, len(foundtorrents), offset)
     await update.effective_message.reply_text(
         "There were {0} torrents found:".format(len(foundtorrents))
     )
@@ -233,11 +249,13 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     for torrent in foundtorrents:
         # torrent = [i] - Name Of The Torrent
         try:
-            line = "<b>{torrent}</b> - <a href=\"{url}\">[URL]</a>".format(torrent=torrent, url=urls[i])
+            line = "<b>{torrent}</b> - <a href=\"{url}\">[URL]</a>".format(
+                torrent=torrent, url=urls[i])
             await update.effective_message.reply_text(line, parse_mode="HTML", disable_web_page_preview=True)
             i = i+1
         except:
-            line = line.replace("<b>", "").replace("</b>", "").replace("<a href=\"", "").replace("\">[URL]</a>", "")
+            line = line.replace("<b>", "").replace(
+                "</b>", "").replace("<a href=\"", "").replace("\">[URL]</a>", "")
             await update.effective_message.reply_text(line, disable_web_page_preview=True)
 
     # Check if found torrent are less than 30, so the search is finished
@@ -245,21 +263,23 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
         await update.effective_message.reply_text("OK! Write wich you want to download.")
         await update.effective_message.reply_text("Or send /cancel to stop.")
         await update.effective_message.reply_text("e.g. 5 or 5, 3, 10...",
-        reply_markup=ReplyKeyboardRemove()
-        )
+                                                  reply_markup=ReplyKeyboardRemove()
+                                                  )
 
         return CHOOSE
 
     # Otherwise ask to continue (offset+1) or stop the search (Continue / Stop inline button)
-    yesText = "Continue-{search}-{offset}".format(search=search,offset=str(offset+1))
+    yesText = "Continue-{search}-{offset}".format(
+        search=search, offset=str(offset+1))
     inline_button = [[
         InlineKeyboardButton(text="Next Page >", callback_data=yesText),
         InlineKeyboardButton(text="Stop", callback_data="Stop"),
     ]]
 
     await update.effective_message.reply_text(text="Do you want to continue search?",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=inline_button)
-    )
+                                              reply_markup=InlineKeyboardMarkup(
+                                                  inline_keyboard=inline_button)
+                                              )
 
     return KEYWORD
 
@@ -277,22 +297,22 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
         await update.effective_message.reply_text("No! Input one or a list of numbers!")
         await update.effective_message.reply_text("Write wich you want to download or /cancel to stop.")
         await update.effective_message.reply_text("e.g. 5 or 5, 3, 10...",
-            reply_markup=ReplyKeyboardRemove()
-        )
+                                                  reply_markup=ReplyKeyboardRemove()
+                                                  )
 
         return CHOOSE
 
-    # Reply to user all the result
+    # Reply to user the result
     for i in res:
         try:
             resp = str(store.get_id_information(id, 0, int(i)))
             url = str(store.get_id_information(id, 2, int(i)))
-            line = "{resp} - {url}".format(resp=resp, url= url)
+            line = "{resp} - {url}".format(resp=resp, url=url)
             await update.effective_message.reply_text(line)
         # Avoid user error:
         except Exception as ex:
             res.remove(i)
-            logger.warning("Chat %s for input \"%s\": %s", id, str(i) , str(ex))
+            logger.warning("Chat %s for input \"%s\": %s", id, str(i), str(ex))
             await update.effective_message.reply_text("Warning! For input \"" + str(i) + "\": " + str(ex))
 
     # And store the items to download in the dictionary if lenght NOT zero
@@ -300,20 +320,21 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
         logger.warning("Chat %s did not select a valid input.", id)
         await update.effective_message.reply_text("Write wich you want do download or /cancel to stop.")
         await update.effective_message.reply_text("e.g. 5 or 5, 3, 10...",
-            reply_markup=ReplyKeyboardRemove()
-        )
+                                                  reply_markup=ReplyKeyboardRemove()
+                                                  )
         return CHOOSE
-        
+
     store.store_id_information(id, "", "", "", "", "", "", res)
 
     inline_button = [[
         InlineKeyboardButton(text="Yes", callback_data="Yes"),
         InlineKeyboardButton(text="No", callback_data="No"),
     ]]
-    
+
     await update.effective_message.reply_text(text="Please confirm the selected torrent:",
-        reply_markup = InlineKeyboardMarkup(inline_keyboard=inline_button)
-    )
+                                              reply_markup=InlineKeyboardMarkup(
+                                                  inline_keyboard=inline_button)
+                                              )
 
     return CONFIRM
 
@@ -332,9 +353,10 @@ async def confirm(update: Update, context: ContextTypes.context) -> int:
     logger.info("Chat %s enter CONFIRM state", id)
 
     if (search != "Yes") and (search != "No"):
-        logger.warning("Chat %s did not select a valid input (%s): (Yes or No)", id, str(search))
+        logger.warning(
+            "Chat %s did not select a valid input (%s): (Yes or No)", id, str(search))
         await update.effective_message.reply_text("Error! Just select \"Yes\" or \"No\""
-        )
+                                                  )
 
         return CONFIRM
 
@@ -345,51 +367,63 @@ async def confirm(update: Update, context: ContextTypes.context) -> int:
         await update.effective_message.reply_text("Ok! Let's start again!")
         await update.effective_message.reply_text("Send /cancel to stop.")
         await update.effective_message.reply_text("Or input a keyword to search in ALL categories:",
-            reply_markup=ReplyKeyboardRemove(),
-        )
+                                                  reply_markup=ReplyKeyboardRemove(),
+                                                  )
 
         store.delete_id_information(id)
         store.create_id_information(id)
 
         return KEYWORD
 
-    # Otherwise send magnet links to the downloader bot
+    # Otherwise send magnet links list to download function
     elif search == "Yes":
         sel = (store.get_id_information(id, 6, ""))
         magnetlinks = (store.get_id_information(id, 1, ""))
         todownload = []
+    # Retrieve the magnetlinks from selection and append to list
         try:
             for i in sel:
                 todownload.append(magnetlinks[int(i)])
         except Exception as ex:
             logger.warning("Chat %s for input \"%s\": %s", id, search, str(ex))
-            await update.effective_message.reply_text("Warning! For input \"" + search + "\": "  + str(ex) 
-            )
-        
-    qbit.DownloadTorrentLink(todownload)
+            await update.effective_message.reply_text("Warning! For input \"" + search + "\": " + str(ex)
+                                                      )
+
+    # Download torrents DownloadTorrentFromLink(list)
+    try:
+        qbit = QBitTorrent()
+        qbit.DownloadTorrentFromLink(todownload)
+    except Exception as ex:
+        logger.error("Chat %s: %s", id, (str(ex)))
+        await update.effective_message.reply_text(str(ex))
+
+    # RDelete the info of the current chat_id
     store.delete_id_information(id)
 
     await update.effective_message.reply_text("My job is done! I hope it was helpful.")
     await update.effective_message.reply_text("You can send /status to check current downloads information.",
-        reply_markup=ReplyKeyboardRemove(),
-    )
+                                              reply_markup=ReplyKeyboardRemove(),
+                                              )
 
     return ConversationHandler.END
-
 
 
 async def status(update: Update, context: ContextTypes.context) -> int:
-    """Starts the conversation and asks the user about categories."""
+    """Check the status of the local downloads"""
     id = update.message.chat_id
     logger.info("Chat %s enter STATUS state", id)
-    localdownloads = qbit.GetTorrentInformation()
-    for torrent in localdownloads:
-        await update.effective_message.reply_text(torrent)
+
+    try:
+        qbit = QBitTorrent()
+        localdownloads = qbit.GetLocalsTorrentInformation()
+        for torrent in localdownloads:
+            await update.effective_message.reply_text(torrent)
+    except Exception as ex:
+        logger.error("Chat %s: %s", id, (str(ex)))
+        await update.effective_message.reply_text(str(ex))
+        await update.effective_message.reply_text("Send /cancel to stop.")
 
     return ConversationHandler.END
-
-
-
 
 
 async def cancel(update: Update, context: ContextTypes.context) -> int:
@@ -399,8 +433,8 @@ async def cancel(update: Update, context: ContextTypes.context) -> int:
     store.delete_id_information(id)
     await update.effective_message.reply_text("Bye! I hope we can talk again some day.")
     await update.effective_message.reply_text("Send /start to start over.",
-        reply_markup=ReplyKeyboardRemove()
-    )
+                                              reply_markup=ReplyKeyboardRemove()
+                                              )
 
     return ConversationHandler.END
 
@@ -408,16 +442,17 @@ async def cancel(update: Update, context: ContextTypes.context) -> int:
 def main() -> None:
     """Run the bot."""
     # Create the Application and pass it your bot's token.
-    application = Application.builder().token("5792075504:AAHlzyBukL4HDqY5T8OIX1Y-bC4mPgq0pqo").build()    
+    application = Application.builder().token(
+        "5792075504:AAHlzyBukL4HDqY5T8OIX1Y-bC4mPgq0pqo").build()
     # Add conversation handler with the states CATEGORIES, PHOTO, LOCATION, KEYWORD
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
-            CATEGORIES:[
+            CATEGORIES: [
                 CallbackQueryHandler(categories),
                 CommandHandler("skip", skip_categories),
             ],
-            SUBCATEGORIES:[
+            SUBCATEGORIES: [
                 CallbackQueryHandler(subcategories),
                 CommandHandler("skip", skip_subcategories),
             ],
@@ -434,11 +469,13 @@ def main() -> None:
                 CallbackQueryHandler(confirm)
             ]
         },
-        fallbacks=[CommandHandler("cancel", cancel)],
+        fallbacks=[CommandHandler("cancel", cancel)]
     )
 
     application.add_handler(conv_handler)
     application.add_handler(CommandHandler("status", status))
+    application.add_handler(CommandHandler("configure", configure))
+
     # Run the bot until the user presses Ctrl-C
     application.run_polling()
 
@@ -446,5 +483,4 @@ def main() -> None:
 if __name__ == "__main__":
     pirate = ThePirateBay()
     store = StoreInformation()
-    qbit = QBitTorrent()
     main()
