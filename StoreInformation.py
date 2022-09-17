@@ -5,6 +5,7 @@ class StoreInformation:
         global globalvar
         globalvar = {"id": ["", "", "", "", "", "", ""]}
 
+
     def create_id_information(self, id:str):
         """Create the dict list with primary key chat_id"""
         globalvar[id] =["", "", "", "", "", "", ""]

@@ -1,9 +1,7 @@
 from tpblite import TPB
 from tpblite import CATEGORIES, ORDERS
-from io import StringIO 
-import sys
 import logging
-from telegram import InlineKeyboardButton,InlineKeyboardMarkup
+from telegram import InlineKeyboardButton
 
 # Enable logging
 logging.basicConfig(

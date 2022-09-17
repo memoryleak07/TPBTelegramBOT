@@ -8,7 +8,7 @@ the Application and registered at their respective places.
 Then, the bot is started and runs until we press Ctrl-C on the command line.
 
 Usage:
-Send /start to initiate the conversation.
+Send /search to initiate the conversation.
 Press Ctrl-C on the command line or send a signal to the process to stop the bot.
 
 Url:
@@ -41,7 +41,7 @@ from telegram.ext import (
     CallbackQueryHandler
 )
 
-from ConfigureBOT import configure
+from TorrentHandlers import status, pauseall, resumeall, forceall
 from QBitTorrent import QBitTorrent
 from StoreInformation import StoreInformation
 from ThePirateBay import ThePirateBay
@@ -70,7 +70,7 @@ async def start(update: Update, context: ContextTypes.context) -> int:
 
     await update.effective_message.reply_text("Hi! I'm Bot.")
     await update.effective_message.reply_text("Select a category or /skip.")
-    await update.effective_message.reply_text("Send /cancel /start to restart conversation.",
+    await update.effective_message.reply_text("Send /cancel /search to restart conversation.",
                                               reply_markup=InlineKeyboardMarkup(
                                                   inline_keyboard=inline_button, resize_keyboard=True)
                                               )
@@ -408,31 +408,13 @@ async def confirm(update: Update, context: ContextTypes.context) -> int:
     return ConversationHandler.END
 
 
-async def status(update: Update, context: ContextTypes.context) -> int:
-    """Check the status of the local downloads"""
-    id = update.message.chat_id
-    logger.info("Chat %s enter STATUS state", id)
-
-    try:
-        qbit = QBitTorrent()
-        localdownloads = qbit.GetLocalsTorrentInformation()
-        for torrent in localdownloads:
-            await update.effective_message.reply_text(torrent)
-    except Exception as ex:
-        logger.error("Chat %s: %s", id, (str(ex)))
-        await update.effective_message.reply_text(str(ex))
-        await update.effective_message.reply_text("Send /cancel to stop.")
-
-    return ConversationHandler.END
-
-
 async def cancel(update: Update, context: ContextTypes.context) -> int:
     """Cancels and ends the conversation."""
     id = update.message.chat_id
     logger.info("Chat %s enter CANCEL state", id)
     store.delete_id_information(id)
     await update.effective_message.reply_text("Bye! I hope we can talk again some day.")
-    await update.effective_message.reply_text("Send /start to start over.",
+    await update.effective_message.reply_text("Send /search to start over.",
                                               reply_markup=ReplyKeyboardRemove()
                                               )
 
@@ -446,7 +428,7 @@ def main() -> None:
         "5792075504:AAHlzyBukL4HDqY5T8OIX1Y-bC4mPgq0pqo").build()
     # Add conversation handler with the states CATEGORIES, PHOTO, LOCATION, KEYWORD
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", start)],
+        entry_points=[CommandHandler("search", start)],
         states={
             CATEGORIES: [
                 CallbackQueryHandler(categories),
@@ -474,7 +456,9 @@ def main() -> None:
 
     application.add_handler(conv_handler)
     application.add_handler(CommandHandler("status", status))
-    application.add_handler(CommandHandler("configure", configure))
+    application.add_handler(CommandHandler("pauseall", pauseall))
+    application.add_handler(CommandHandler("resumeall", resumeall))
+    application.add_handler(CommandHandler("forceall", forceall))
 
     # Run the bot until the user presses Ctrl-C
     application.run_polling()
