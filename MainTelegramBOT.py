@@ -163,16 +163,24 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     logger.info("Chat %s keyword is: %s", id, search)
 
     offset = 1
-    # If user press "Stop":
-    if search == 'Stop':
-        await update.effective_message.reply_text("OK!")
-        await update.effective_message.reply_text("Write wich you want to download.")
-        await update.effective_message.reply_text("Or send /cancel to stop.")
-        await update.effective_message.reply_text("e.g. 5 or 5, 3, 10...",
+
+    # If user press "Download":
+    if search == 'Download':
+        await update.effective_message.reply_text("Ok!")
+        await update.effective_message.reply_text("Write wich you want to download. \n(Or send /cancel to stop)")
+        await update.effective_message.reply_text("e.g: 5 or 5, 3, 10...",
                                                   reply_markup=ReplyKeyboardRemove()
                                                   )
-
         return CHOOSE
+
+    # If user press "Stop":
+    if search == 'Cancel':
+        await update.effective_message.reply_text("Bye! I hope we can talk again some day.")
+        await update.effective_message.reply_text("Send /search to start over.",
+                                                reply_markup=ReplyKeyboardRemove()
+                                                )
+        store.delete_id_information(id) 
+        return ConversationHandler.END
 
     # Else try to retrieve keyword and offset (page) from resp. If Except set page = 1,
     try:
@@ -185,9 +193,9 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
         if (search != previoussearch) & (previoussearch != ""):
             logger.warning(
                 "Chat %s did not select a valid input (%s).", id, str(search))
-            await update.effective_message.reply_text("Finish this before start a new search, ok? Or /cancel to stop.")
-            await update.effective_message.reply_text("Write wich you want to download.")
-            await update.effective_message.reply_text("e.g. 5 or 5, 3, 10...",
+            await update.effective_message.reply_text("Finish this before start a new search, ok?")
+            await update.effective_message.reply_text("Write wich you want to download. \n(Or send /cancel to stop)")
+            await update.effective_message.reply_text("e.g: 5 or 5, 3, 10...",
                                                       reply_markup=ReplyKeyboardRemove()
                                                       )
             return CHOOSE
@@ -198,11 +206,11 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
 
     # Print info about search
     if (category != "") & (subcategory != ""):
-        await update.effective_message.reply_text("Searching \"{search}\" in category \"{category} - {subcategory}\"...".format(search=search, category=category, subcategory=subcategory))
+        await update.effective_message.reply_text("Searching \"{search}\" in \"{category} - {subcategory}\" (page={offset}) ...".format(search=search, category=category, subcategory=subcategory, offset=offset))
     elif (category != "") & (subcategory == ""):
-        await update.effective_message.reply_text("Searching \"{search}\" in category \"{category}\"...".format(search=search, category=category))
+        await update.effective_message.reply_text("Searching \"{search}\" in \"{category}\" (page={offset}) ...".format(search=search, category=category, offset=offset))
     elif category == "":
-        await update.effective_message.reply_text("Searching \"{search}\" in \"ALL\" categories...".format(search=search))
+        await update.effective_message.reply_text("Searching \"{search}\" in \"ALL\" (page={offset}) ...".format(search=search, offset=offset))
 
     try:
         # Send pirate search command (keyword (str), page (int), category (int))
@@ -257,9 +265,8 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
 
     # Check if found torrent are less than 30, so the search is finished
     if (len(foundtorrents)) < 30:
-        await update.effective_message.reply_text("OK! Write wich you want to download.")
-        await update.effective_message.reply_text("Or send /cancel to stop.")
-        await update.effective_message.reply_text("e.g. 5 or 5, 3, 10...",
+        await update.effective_message.reply_text("OK! Write wich you want to download. \n(Or send /cancel to stop)")
+        await update.effective_message.reply_text("e.g: 5 or 5, 3, 10...",
                                                   reply_markup=ReplyKeyboardRemove()
                                                   )
 
@@ -269,8 +276,9 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
     yesText = "Continue-{search}-{offset}".format(
         search=search, offset=str(offset+1))
     inline_button = [[
-        InlineKeyboardButton(text="Next Page >", callback_data=yesText),
-        InlineKeyboardButton(text="Stop", callback_data="Stop"),
+        InlineKeyboardButton(text="NEXT PAGE >", callback_data=yesText),
+        InlineKeyboardButton(text="DOWNLOAD", callback_data="Download"),
+        InlineKeyboardButton(text="CANCEL", callback_data="Cancel"),
     ]]
 
     await update.effective_message.reply_text(text="Do you want to continue search?",
@@ -283,7 +291,11 @@ async def keyword(update: Update, context: ContextTypes.context) -> int:
 
 async def choose(update: Update, context: ContextTypes.context) -> int:
     """Select wich torrent download and call canfirm action"""
-    id = update.message.chat_id
+    try:
+        id = update.message.chat_id
+    except:
+        return CHOOSE
+
     logger.info("Chat %s enter CHOOSE state", id)
     logger.info("Chat %s choose: %s", id, update.message.text)
     # Convert user response in numeric list
@@ -293,7 +305,7 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
         logger.warning("Chat %s did not select a valid input.", id)
         await update.effective_message.reply_text("No! Input one or a list of numbers!")
         await update.effective_message.reply_text("Write wich you want to download or /cancel to stop.")
-        await update.effective_message.reply_text("e.g. 5 or 5, 3, 10...",
+        await update.effective_message.reply_text("e.g: 5 or 5, 3, 10...",
                                                   reply_markup=ReplyKeyboardRemove()
                                                   )
 
@@ -316,7 +328,7 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
     if len(res) == 0:
         logger.warning("Chat %s did not select a valid input.", id)
         await update.effective_message.reply_text("Write wich you want do download or /cancel to stop.")
-        await update.effective_message.reply_text("e.g. 5 or 5, 3, 10...",
+        await update.effective_message.reply_text("e.g: 5 or 5, 3, 10...",
                                                   reply_markup=ReplyKeyboardRemove()
                                                   )
         return CHOOSE
@@ -324,8 +336,8 @@ async def choose(update: Update, context: ContextTypes.context) -> int:
     store.store_id_information(id, "", "", "", "", "", "", res)
 
     inline_button = [[
-        InlineKeyboardButton(text="Yes", callback_data="Yes"),
-        InlineKeyboardButton(text="No", callback_data="No"),
+        InlineKeyboardButton(text="YES", callback_data="Yes"),
+        InlineKeyboardButton(text="NO", callback_data="No"),
     ]]
 
     await update.effective_message.reply_text(text="Please confirm the selected torrent:",
@@ -377,7 +389,7 @@ async def confirm(update: Update, context: ContextTypes.context) -> int:
         sel = (store.get_id_information(id, 6, ""))
         magnetlinks = (store.get_id_information(id, 1, ""))
         todownload = []
-    # Retrieve the magnetlinks from selection and append to list
+        # Retrieve the magnetlinks from selection and append to list
         try:
             for i in sel:
                 todownload.append(magnetlinks[int(i)])
@@ -389,7 +401,7 @@ async def confirm(update: Update, context: ContextTypes.context) -> int:
     # Start download:
     try:
         qbit = QBitTorrent()
-        qbit.DownloadTorrentFromLink(todownload)
+        qbit.DownloadTorrentFromLink(id, todownload)
         await update.effective_message.reply_text("My job is done! I hope it was helpful.")
         await update.effective_message.reply_text("You can send /search to start again or /status to check current downloads.",
                                                   reply_markup=ReplyKeyboardRemove(),

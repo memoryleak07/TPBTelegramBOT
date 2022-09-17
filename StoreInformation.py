@@ -1,3 +1,10 @@
+import logging
+# Enable logging
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
 
 class StoreInformation:
 
@@ -8,11 +15,13 @@ class StoreInformation:
 
     def create_id_information(self, id:str):
         """Create the dict list with primary key chat_id"""
+        logger.info("Chat %s create_id_information", id)
         globalvar[id] =["", "", "", "", "", "", ""]
 
 
     def store_id_information(self, id, foundtorrents, magnetlinks, urls, search, category, subcategory, select):
         """Store the conversation info in dict. Primary key is chat_id"""
+        logger.info("Chat %s store_id_information", id)
         # If doesn't exist create chat_id
         if id not in globalvar:
             self.create_id_information(id)
@@ -53,6 +62,7 @@ class StoreInformation:
 
     def delete_id_information(self, id:str):
         """Delete the info of chat_id """
+        logger.info("Chat %s delete_id_information", id)
         try:
             del globalvar[id]
         except:

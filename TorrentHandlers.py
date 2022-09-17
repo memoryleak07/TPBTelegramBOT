@@ -20,13 +20,13 @@ async def status(update: Update, context: ContextTypes.context) -> int:
 
     try:
         qbit = QBitTorrent()
-        downloading = qbit.ReplyUserLocalsTorrentInformation("downloading")
+        downloading = qbit.ReplyUserLocalsTorrentInformation(id, "downloading")
         if len(downloading) != 0:
-            await update.effective_message.reply_text("In progress:")
+            await update.effective_message.reply_text("Download in progress:")
             for torrent in downloading:
                 await update.effective_message.reply_text(torrent)
         
-        completed = qbit.ReplyUserLocalsTorrentInformation("completed")
+        completed = qbit.ReplyUserLocalsTorrentInformation(id, "completed")
         if len(completed) != 0:
             await update.effective_message.reply_text("Download completed:")
             for torrent in completed:
@@ -45,10 +45,10 @@ async def status(update: Update, context: ContextTypes.context) -> int:
 async def pauseall(update: Update, context: ContextTypes.context) -> int:
     """Pause all local downloads"""
     id = update.message.chat_id
-    logger.info("Chat %s enter PAUSE ALL state", id)
+    logger.info("Chat %s send PAUSE ALL", id)
     try:
         qbit = QBitTorrent()
-        qbit.PauseAll()
+        qbit.PauseAll(id)
         await update.effective_message.reply_text("Ok job done!")
     except Exception as ex:
         logger.error("Chat %s: %s", id, (str(ex)))
@@ -60,10 +60,10 @@ async def pauseall(update: Update, context: ContextTypes.context) -> int:
 async def resumeall(update: Update, context: ContextTypes.context) -> int:
     """Resume all local downloads"""
     id = update.message.chat_id
-    logger.info("Chat %s enter RESUME ALL state", id)
+    logger.info("Chat %s send RESUME ALL", id)
     try:
         qbit = QBitTorrent()
-        qbit.ResumeAll()
+        qbit.ResumeAll(id)
         await update.effective_message.reply_text("Ok job done!")
     except Exception as ex:
         logger.error("Chat %s: %s", id, (str(ex)))
@@ -75,10 +75,10 @@ async def resumeall(update: Update, context: ContextTypes.context) -> int:
 async def forceall(update: Update, context: ContextTypes.context) -> int:
     """Pause all local downloads"""
     id = update.message.chat_id
-    logger.info("Chat %s enter FORCE ALL state", id)
+    logger.info("Chat %s send FORCE ALL", id)
     try:
         qbit = QBitTorrent()
-        qbit.ForceAll()
+        qbit.ForceAll(id)
         await update.effective_message.reply_text("Ok job done!")
     except Exception as ex:
         logger.error("Chat %s: %s", id, (str(ex)))
