@@ -1,16 +1,9 @@
-
 import logging
 from QBitTorrent import QBitTorrent
-from telegram import ReplyKeyboardRemove, Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import Update
 from telegram.ext import (
-    Application,
-    CommandHandler,
     ContextTypes,
-    ConversationHandler,
-    MessageHandler,
-    filters,
-    CommandHandler,
-    CallbackQueryHandler
+    ConversationHandler
 )
 
 # Enable logging
@@ -92,6 +85,7 @@ async def forceall(update: Update, context: ContextTypes.context) -> int:
         await update.effective_message.reply_text(str(ex))
 
     return ConversationHandler.END
+
 
 async def configure(update: Update, context: ContextTypes.context) -> int:
     """Panel of configuration"""

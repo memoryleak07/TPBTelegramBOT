@@ -29,6 +29,10 @@ https://t.me/noncapiscocosastasuccedendobot
 
 import re
 import logging
+from TorrentHandlers import status, pauseall, resumeall, forceall
+from QBitTorrent import QBitTorrent
+from StoreInformation import StoreInformation
+from ThePirateBay import ThePirateBay
 from telegram import ReplyKeyboardRemove, Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import (
     Application,
@@ -41,11 +45,6 @@ from telegram.ext import (
     CallbackQueryHandler
 )
 
-from TorrentHandlers import status, pauseall, resumeall, forceall
-from QBitTorrent import QBitTorrent
-from StoreInformation import StoreInformation
-from ThePirateBay import ThePirateBay
-
 
 # Enable logging
 logging.basicConfig(
@@ -54,11 +53,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 CATEGORIES, SUBCATEGORIES, KEYWORD, CHOOSE, CONFIRM = range(5)
-
 foundtorrents = []
 magnetlinks = []
 urls = []
-#input_field_placeholder="e.g.  *artist* *album* *movie*" / e.g.  3 , 5, 12
 
 
 async def start(update: Update, context: ContextTypes.context) -> int:
@@ -389,21 +386,20 @@ async def confirm(update: Update, context: ContextTypes.context) -> int:
             await update.effective_message.reply_text("Warning! For input \"" + search + "\": " + str(ex)
                                                       )
 
-    # Download torrents DownloadTorrentFromLink(list)
+    # Start download:
     try:
         qbit = QBitTorrent()
         qbit.DownloadTorrentFromLink(todownload)
+        await update.effective_message.reply_text("My job is done! I hope it was helpful.")
+        await update.effective_message.reply_text("You can send /search to start again or /status to check current downloads.",
+                                                  reply_markup=ReplyKeyboardRemove(),
+                                                  )
     except Exception as ex:
         logger.error("Chat %s: %s", id, (str(ex)))
         await update.effective_message.reply_text(str(ex))
 
-    # RDelete the info of the current chat_id
+    # Delete the info of the current chat_id:
     store.delete_id_information(id)
-
-    await update.effective_message.reply_text("My job is done! I hope it was helpful.")
-    await update.effective_message.reply_text("You can send /status to check current downloads information.",
-                                              reply_markup=ReplyKeyboardRemove(),
-                                              )
 
     return ConversationHandler.END
 

@@ -35,7 +35,7 @@ class QBitTorrent:
         """This will return all torrents which are currently downloading and are labeled as ``my category``."""
         return self.qb.torrents(filter=key, sort="progress")
 
-    def DownloadTorrentFromLink(self, link_list: list):
+    def DownloadTorrentFromLink(self, link_list:list):
         """"No matter the link is correct or not, method will always return empty JSON object."""
         self.qb.download_from_link(link_list)
 

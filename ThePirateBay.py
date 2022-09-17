@@ -13,8 +13,7 @@ logger = logging.getLogger(__name__)
 class ThePirateBay:
 
     def __init__(self) -> None:
-        # Create a TPB object with a domain name
-        # t = TPB('https://tpb.party')
+        # Create a TPB object with a domain name: t = TPB('https://tpb.party')
         # Or create a TPB object with default domain
         self.t = TPB()
         
@@ -49,9 +48,6 @@ class ThePirateBay:
     def GetSubCategories(self, macro:str):
         y:str
         output = []
-        # if macro == "ALL":
-        #     return output
-
         categories = (getattr(CATEGORIES, macro)).__dict__.keys()
         for y in categories:
             if not (y.startswith("__")):
