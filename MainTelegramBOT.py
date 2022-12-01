@@ -27,6 +27,7 @@ https://t.me/noncapiscocosastasuccedendobot
 #         f"visit https://docs.python-telegram-bot.org/en/v{TG_VER}/examples.html"
 #     )
 
+import json
 import re
 import logging
 from TorrentHandlers import status, pauseall, resumeall, forceall
@@ -56,6 +57,7 @@ CATEGORIES, SUBCATEGORIES, KEYWORD, CHOOSE, CONFIRM = range(5)
 foundtorrents = []
 magnetlinks = []
 urls = []
+settings = json.load(open("settings.json"))
 
 
 async def start(update: Update, context: ContextTypes.context) -> int:
@@ -433,7 +435,9 @@ def main() -> None:
     """Run the bot."""
     # Create the Application and pass it your bot's token.
     application = Application.builder().token(
-        "5792075504:AAHlzyBukL4HDqY5T8OIX1Y-bC4mPgq0pqo").build()
+        settings['botToken'] ).base_url(
+            settings['baseUrl']
+        ).build()
     # Add conversation handler with the states CATEGORIES, PHOTO, LOCATION, KEYWORD
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("search", start)],

@@ -1,7 +1,5 @@
 t.py
 testTelegramBOT_.py
 testThePirateBay.py
-__pycache__/testThePirateBay.cpython-39.pyc
-__pycache__/ThePirateBay.cpython-39.pyc
-__pycache__/testThePirateBay.cpython-39.pyc
-__pycache__/testThePirateBay.cpython-39.pyc
+__pycache__/*
+settings.json
