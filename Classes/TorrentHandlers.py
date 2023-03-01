@@ -1,5 +1,5 @@
 import logging
-from QBitTorrent import QBitTorrent
+from Classes.QBitTorrent import QBitTorrent
 from telegram import Update
 from telegram.ext import (
     ContextTypes,

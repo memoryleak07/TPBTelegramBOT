@@ -1,4 +1,10 @@
 {
     "botToken": null,
-    "baseUrl": "https://api.telegram.org/bot"
+    "baseUrl": "https://api.telegram.org/bot",
+    "base_file_url": "https://api.telegram.org/file/bot",
+    "extMemory": "C:\\temp",
+    //settare a true se si utilizzano API personali
+    "localApi": false,
+    //settare a null con API personali
+    "read_timeout": 5.0
 }

@@ -3,10 +3,12 @@
 
 # # Applying labels to downloads:
 # self.qb.download_from_link(magnet_link, category='anime')
+
+# Raspberry installation: https://pimylifeup.com/raspberry-pi-qbittorrent/
 import logging
 from qbittorrent import Client
 
-CLIENT = 'http://127.0.0.1:8080/'
+CLIENT = 'http://127.0.0.1:8980/'
 USER = "admin"
 PASSWORD = "adminadmin"
 

@@ -3,3 +3,5 @@ testTelegramBOT_.py
 testThePirateBay.py
 __pycache__/*
 settings.json
+/dataList.dict
+/tmp/
