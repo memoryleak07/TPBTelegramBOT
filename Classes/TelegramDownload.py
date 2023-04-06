@@ -55,7 +55,6 @@ async def space(update: Update, context: CallbackContext):
     await update.message.reply_text(f'Internal memory:\nTotal: {internalSpace.total}GB\nUsed: {internalSpace.used}GB\nFree: {internalSpace.free}GB')
     await update.message.reply_text(f'External memory:\nTotal: {extMemory.total}GB\nUsed: {extMemory.used}GB\nFree: {extMemory.free}GB')
 
-
 async def space_on_doc(update: Update, context: CallbackContext):
     """Get disks space on video handler"""
     await space(update, context)
