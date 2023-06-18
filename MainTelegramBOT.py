@@ -54,7 +54,8 @@ settings = json.load(open("settings.json"))
 
 
 async def start(update: Update, context: CallbackContext):
-    await update.message.reply_text(f"""For torrent type /search\nfor telegram download type /dwtelegram""")
+    await update.message.reply_text("Hi! I'm Major Tom.")
+    await update.message.reply_text(f"""For torrent search type /search\nFor download by Telegram type /dwtelegram""")
 
 
 async def error(update: Update, context: CallbackContext):
@@ -149,3 +150,17 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+# start - Start the conversation
+# search - New torrent search
+# cancel - Stop the conversation
+# status - Check local torrents
+# pauseall - Pause all torrents
+# resumeall - Resume all torrents
+# forceall - Force start all torrents
+# dwtelegram - For download file with TG
+# space - For check disks space
+# next - For send file
+# prev - For select directory
+# dwList - For show list of files and download status
+# end - For exit from download TG

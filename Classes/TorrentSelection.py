@@ -35,7 +35,7 @@ async def start_torrent(update: Update, context: ContextTypes.context) -> int:
 
     inline_button = pirate.GetInlineAllCategories()
 
-    await update.effective_message.reply_text("Hi! I'm Bot.")
+    #await update.effective_message.reply_text("Hi! I'm Bot.")
     await update.effective_message.reply_text("Select a category or /skip.")
     await update.effective_message.reply_text("Send /cancel /search to restart conversation.",
                                               reply_markup=InlineKeyboardMarkup(
