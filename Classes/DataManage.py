@@ -55,12 +55,16 @@ class DataManage:
                 workableList.append(d)
 
         return workableList
+    
+    async def update_file_name(self, index, file_name):
+        self.Data[index].fileNameSetted = file_name
 
     async def get_view_download_list(self):
         downloadList = []
-
+        i = 0
         for d in self.Data:
-            downloadList.append(f'{d.file.file_name}|{d.status}')
+            i += 1
+            downloadList.append(f'[{1}]{d.get_file_name()}|{d.status}')
 
         return downloadList
 

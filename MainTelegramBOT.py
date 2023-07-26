@@ -125,7 +125,13 @@ def main() -> None:
                 CommandHandler('space', space_on_doc),
                 CommandHandler('dwList', dw_list),
                 CommandHandler('setsNew', set_to_new),
+                CommandHandler('setName', run_set_name),
                 MessageHandler(filters.ALL, append_download),
+            ],
+            SETNAME: [
+                CommandHandler('dwList', dw_list_set_name),
+                CommandHandler('nameEnd', end_set_name),
+                MessageHandler(filters.TEXT, set_name_to_file),
             ],
         },
         fallbacks=[CommandHandler('end', end_telegram_download)],

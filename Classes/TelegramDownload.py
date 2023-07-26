@@ -33,7 +33,8 @@ destinationPathKey = 'destinationPath'
 chatIdKey = 'chat_id'
 jobStatusKey = 'jobStatus'
 last_dir_message = 'message_dir_id'
-SPECIFY, DOC = range(2)
+SPECIFY, DOC, SETNAME = range(3)
+downloadListKey = 'download_list'
 
 
 async def dw_telegram(update: Update, context: CallbackContext):
@@ -45,6 +46,7 @@ async def dw_telegram(update: Update, context: CallbackContext):
     )
     await ls_command(update, context)
     await start_job(update, context)
+    context.user_data[downloadListKey] = False
     return SPECIFY
 
 
@@ -112,7 +114,7 @@ async def ls_dir_command(update: Update, context: CallbackContext):
 async def next_command(update: Update, context: CallbackContext):
     """Run for await download file"""
     await update.message.reply_text(f'Await for file download in: {await get_path(context)}')
-    await update.message.reply_text(f'The commands available in this section are:\n/prev for select directory\n/space for disks spaces\n/dwList for show list of file and download status\n/end for exit from dw_telegram')
+    await update.message.reply_text(f'The commands available in this section are:\n/prev for select directory\n/space for disks spaces\n/dwList for show list of file and download status\n/end for exit from dw_telegram\n/setName for change file name')
     return DOC
 
 
@@ -175,13 +177,13 @@ async def downloader_async(data: TelegramFile, context: CallbackContext):
         dw = await context.bot.get_file(data.file.file_id)
         if not localApi:
             # Scarica localmente il file
-            await dw.download(custom_path=data.full_destination_path)
+            await dw.download(custom_path=data.get_full_destination_path())
         else:
             # Muove il file scaricato dall'API nella directory desiderata
             # 'http://192.168.0.18:8880/file/bot<bottoken>//home/pi/Documents/telegram-bot-api/build/<token>/videos/file_7.mp4'
             file_location = f'{dw.file_path}'.replace(
                 f'{settings["base_file_url"]}{settings["botToken"]}/', '')
-            shutil.move(file_location, data.full_destination_path)
+            shutil.move(file_location, data.get_full_destination_path())
     except Exception as e:
         logger.exception(e)
         data.status = DownloadStatus.ERROR
@@ -191,7 +193,7 @@ async def downloader_async(data: TelegramFile, context: CallbackContext):
     data.status = DownloadStatus.DOWNLOADED
     await dataManage.update_file(data)
 
-    logger.info(f"End downloader, file saved {data.full_destination_path}")
+    logger.info(f"End downloader, file saved {data.get_full_destination_path()}")
     await context.bot.send_message(chat_id=data.chat.id, text=f'File \"{data.file.file_name}\" downloaded successfully!')
 
 
@@ -217,6 +219,10 @@ async def start_job(update: Update, context: CallbackContext):
 
 async def dw_list(update: Update, context: CallbackContext):
     """Send list of download and status"""
+    await execute_dw_list_command(update, context)
+    return DOC
+
+async def execute_dw_list_command(update: Update, context: CallbackContext):
     download_list = await dataManage.get_view_download_list()
     items_length = 20
     if len(download_list) > 0:
@@ -230,11 +236,39 @@ async def dw_list(update: Update, context: CallbackContext):
         await update.message.reply_text("Send /setsNew for set all download status \"ERROR\" in \"NEW\"")
     else:
         await update.message.reply_text("Download list is empty")
-
-    return DOC
-
+    context.user_data[downloadListKey] = True
 
 async def set_to_new(update: Update, context: CallbackContext):
     """Set to new all file in error state"""
     await dataManage.set_all_to_new()
+    await update.message.reply_text("Update executed!")
     return DOC
+
+async def run_set_name(update: Update, context: CallbackContext):
+    """Set to new all file in error state"""
+    await update.message.reply_text("Send the new name by first indicating the number belonging to the download list file and then specifying the new name, separating them by a pipe. 1|name")
+    return SETNAME
+
+async def set_name_to_file(update: Update, context: CallbackContext):
+    """Set to new all file in error state"""
+    if context.user_data[downloadListKey]:
+        message = update.message.text.split('|')
+        if len(message) > 0:
+            await dataManage.update_file_name(int(message[0]) - 1, message[1])
+            await update.message.reply_text(f"Name {message[1]} setted. Submit another name to change or send the '/nameEnd' command to return to the download")
+        else:
+            await update.message.reply_text("The number must be indicated first and then the name and separated by pipe. 1|name")
+    else:
+        await update.message.reply_text("Send first download list command '/dwList'")
+    context.user_data[downloadListKey] = False
+    return SETNAME
+
+async def end_set_name(update: Update, context: CallbackContext):
+    """Set to new all file in error state"""
+    await next_command(update, context)
+    return DOC
+
+async def dw_list_set_name(update: Update, context: CallbackContext):
+    """Set to new all file in error state"""
+    await execute_dw_list_command(update, context)
+    return SETNAME
