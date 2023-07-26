@@ -190,6 +190,7 @@ async def downloader_async(data: TelegramFile, context: CallbackContext):
         await dataManage.update_file(data)
         raise e
 
+    context.user_data[downloadListKey] = False
     data.status = DownloadStatus.DOWNLOADED
     await dataManage.update_file(data)
 
@@ -252,15 +253,15 @@ async def run_set_name(update: Update, context: CallbackContext):
 async def set_name_to_file(update: Update, context: CallbackContext):
     """Set to new all file in error state"""
     if context.user_data[downloadListKey]:
-        message = update.message.text.split('|')
-        if len(message) > 0:
+        if '|' in update.message.text and len(update.message.text.split('|')) > 0:
+            message = update.message.text.split('|')
             await dataManage.update_file_name(int(message[0]) - 1, message[1])
             await update.message.reply_text(f"Name {message[1]} setted. Submit another name to change or send the '/nameEnd' command to return to the download")
+            context.user_data[downloadListKey] = False
         else:
-            await update.message.reply_text("The number must be indicated first and then the name and separated by pipe. 1|name")
+            await update.message.reply_text("The number must be indicated first and then the name and separated by pipe (1|name) or send the '/nameEnd' command to return to the download.")
     else:
         await update.message.reply_text("Send first download list command '/dwList'")
-    context.user_data[downloadListKey] = False
     return SETNAME
 
 async def end_set_name(update: Update, context: CallbackContext):
