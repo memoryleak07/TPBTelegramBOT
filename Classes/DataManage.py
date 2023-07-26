@@ -64,7 +64,7 @@ class DataManage:
         i = 0
         for d in self.Data:
             i += 1
-            downloadList.append(f'[{1}]{d.get_file_name()}|{d.status}')
+            downloadList.append(f'[{i}]{d.get_file_name()}|{d.status}')
 
         return downloadList
 
