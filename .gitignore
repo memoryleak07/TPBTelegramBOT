@@ -5,3 +5,6 @@ __pycache__/*
 settings.json
 /dataList.dict
 /tmp/
+/Classes/__pycache__/*
+/Helpers/__pycache__/*
+/Models/__pycache__/*

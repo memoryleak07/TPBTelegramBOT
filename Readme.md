@@ -14,6 +14,5 @@ cd telegram-bot-api
 mkdir build
 cd build
 CXXFLAGS="-stdlib=libc++" CC=/usr/bin/clang CXX=/usr/bin/clang++ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=../tdlib ..
-cmake --build . --target prepare_cross_compiling
-cmake --install
+cmake --install . --target prepare_cross_compiling
 ``` 
