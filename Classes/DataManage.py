@@ -58,6 +58,8 @@ class DataManage:
     
     async def update_file_name(self, index, file_name):
         self.Data[index].fileNameSetted = file_name
+        
+        self.write_data()
 
     async def get_view_download_list(self):
         downloadList = []
