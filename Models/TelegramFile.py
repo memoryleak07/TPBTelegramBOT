@@ -23,15 +23,16 @@ class TelegramFile:
             file_mame, extension = os.path.splitext(self.file.file_name)
 
         if self.file.mime_type and not extension:
-            destination += guess_extension(self.file.mime_type)
-
+            extension = guess_extension(self.file.mime_type)
+        destination += extension
         return os.path.join(self.destinationPath, destination)
     
     def get_file_name(self):
         file_name = ''
         if self.fileNameSetted == '':
             if self.file.file_name:
-                file_name += self.file.file_name
+                file_mame_not_extension, extension = os.path.splitext(self.file.file_name)
+                file_name += file_mame_not_extension
             else:
                 file_name += self.file.file_unique_id
         else:
