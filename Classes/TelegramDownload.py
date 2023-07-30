@@ -171,10 +171,12 @@ async def downloader_async(data: TelegramFile, context: CallbackContext):
 
     path = data.destinationPath
     PathManage.create_dir(path)
+    logger.info(f"Path '{path}' created")
     try:
         data.status = DownloadStatus.DOWNLOADING
         await dataManage.update_file(data)
         dw = await context.bot.get_file(data.file.file_id)
+        logger.info(f"API download of '{data.get_file_name()}' executed\nSaved at '{dw.file_path}'")
         if not localApi:
             # Scarica localmente il file
             await dw.download(custom_path=data.get_full_destination_path())
@@ -183,14 +185,16 @@ async def downloader_async(data: TelegramFile, context: CallbackContext):
             # 'http://192.168.0.18:8880/file/bot<bottoken>//home/pi/Documents/telegram-bot-api/build/<token>/videos/file_7.mp4'
             file_location = f'{dw.file_path}'.replace(
                 f'{settings["base_file_url"]}{settings["botToken"]}/', '')
-            shutil.move(file_location, data.get_full_destination_path())
+            logger.info(f"file_location: {file_location}")
+            logger.info(f"full destination path: {data.get_full_destination_path()}")
+            destination_path = data.get_full_destination_path()
+            shutil.move(file_location, destination_path)
     except Exception as e:
         logger.exception(e)
         data.status = DownloadStatus.ERROR
         await dataManage.update_file(data)
         raise e
-
-    context.user_data[downloadListKey] = False
+    
     data.status = DownloadStatus.DOWNLOADED
     await dataManage.update_file(data)
 
