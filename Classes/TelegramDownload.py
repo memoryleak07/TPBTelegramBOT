@@ -144,7 +144,8 @@ async def append_download(update: Update, context: CallbackContext):
         file=doc,
         forward_from=update.message.forward_from_chat,
         destinationPath=dest,
-        chat=update.message.chat)
+        chat=update.message.chat,
+        caption_message=update.message.caption)
     await dataManage.update_file(file)
 
     return DOC
@@ -199,7 +200,7 @@ async def downloader_async(data: TelegramFile, context: CallbackContext):
     await dataManage.update_file(data)
 
     logger.info(f"End downloader, file saved {data.get_full_destination_path()}")
-    await context.bot.send_message(chat_id=data.chat.id, text=f'File \"{data.file.file_name}\" downloaded successfully!')
+    await context.bot.send_message(chat_id=data.chat.id, text=f'File \"{data.get_file_name()}\" downloaded successfully!')
 
 
 async def check_and_download(context):
