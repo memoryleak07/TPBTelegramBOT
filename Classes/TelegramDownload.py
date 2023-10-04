@@ -140,9 +140,13 @@ async def append_download(update: Update, context: CallbackContext):
         return DOC
 
     dest = await get_path(context)
+    if not update.message.forward_from_chat:
+        forwoard_from = update.message.forward_from
+    else:
+        forwoard_from = update.message.forward_from_chat
     file = TelegramFile(
         file=doc,
-        forward_from=update.message.forward_from_chat,
+        forward_from=forwoard_from,
         destinationPath=dest,
         chat=update.message.chat,
         caption_message=update.message.caption)
