@@ -92,7 +92,14 @@ async def dir_specify(update: Update, context: CallbackContext):
 async def ls_command(update: Update, context: CallbackContext, message=""):
     """Show list of directory"""
     message = f'{message}select or send the next directory name (for create or move)'
-    directories = PathManage.GetInlineAllDirectories(await get_path(context))
+    try:
+        directories = PathManage.GetInlineAllDirectories(await get_path(context))
+    except:
+        #se la directory viene cancellata esternamente riesce a restituire le directory
+        logger.info(f'{await get_path(context)} not found, change on context with {externalMemory}')
+        context.user_data[destinationPathKey] = externalMemory
+        directories = PathManage.GetInlineAllDirectories(externalMemory)
+
     if update.callback_query:
         dir_message = await update.callback_query.message.reply_text(message, reply_markup=InlineKeyboardMarkup(
                                     inline_keyboard=directories, resize_keyboard=True)
