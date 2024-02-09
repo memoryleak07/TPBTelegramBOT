@@ -54,7 +54,7 @@ settings = json.load(open("settings.json"))
 
 
 async def start(update: Update, context: CallbackContext):
-    await update.message.reply_text(f"""For torrent type /search\nfor telegram download type /dwtelegram""")
+    await update.message.reply_text(f"""For torrent send /search\nfor magnet link download send /magnet\nfor telegram download send /dwtelegram""")
 
 
 async def error(update: Update, context: CallbackContext):
@@ -137,8 +137,19 @@ def main() -> None:
         fallbacks=[CommandHandler('end', end_telegram_download)],
     )
 
+    conv_handler3 = ConversationHandler(
+        entry_points=[CommandHandler("magnet", download_magnet)],
+        states={
+            DOWNLOAD_MODE: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, download_by_link),
+            ]
+        },
+        fallbacks=[CommandHandler("end", download_by_link_end)]
+    )
+
     application.add_handler(conv_handler1)
     application.add_handler(conv_handler2)
+    application.add_handler(conv_handler3)
     application.add_handler(CommandHandler("space", space))
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("status", status))

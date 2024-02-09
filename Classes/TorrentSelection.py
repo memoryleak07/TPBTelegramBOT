@@ -21,6 +21,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 CATEGORIES, SUBCATEGORIES, KEYWORD, CHOOSE, CONFIRM = range(5)
+DOWNLOAD_MODE = range(1)
 foundtorrents = []
 magnetlinks = []
 urls = []
@@ -395,5 +396,30 @@ async def cancel(update: Update, context: ContextTypes.context) -> int:
     await update.effective_message.reply_text("Send /search to start over.",
                                               reply_markup=ReplyKeyboardRemove()
                                               )
+
+    return ConversationHandler.END
+
+async def download_magnet(update: Update, context: ContextTypes.context) -> int:
+    await update.effective_message.reply_text("Now, send link or send /end to finish")
+    
+    return DOWNLOAD_MODE
+
+async def download_by_link(update: Update, context: ContextTypes.context) -> int:
+    search = update.message.text
+    id = update.message.chat_id
+    links = []
+    links.append(search)
+    try:
+        qbit = QBitTorrent()
+        qbit.DownloadTorrentFromLink(id, links)
+        await update.effective_message.reply_text("My job is done! Send another link or /end to finish")
+    except Exception as ex:
+        logger.error("Chat %s: %s", id, (str(ex)))
+        await update.effective_message.reply_text(str(ex))
+    
+    return DOWNLOAD_MODE
+
+async def download_by_link_end(update: Update, context: ContextTypes.context) -> int:
+    await update.effective_message.reply_text("Send /start to show command.")
 
     return ConversationHandler.END
