@@ -152,6 +152,7 @@ def main() -> None:
     application.add_handler(conv_handler3)
     application.add_handler(CommandHandler("space", space))
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("qbittorrent", qbittorent_command))
     application.add_handler(CommandHandler("status", status))
     application.add_handler(CommandHandler("pauseall", pauseall))
     application.add_handler(CommandHandler("resumeall", resumeall))
