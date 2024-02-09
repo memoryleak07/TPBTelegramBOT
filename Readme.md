@@ -16,3 +16,22 @@ cd build
 CXXFLAGS="-stdlib=libc++" CC=/usr/bin/clang CXX=/usr/bin/clang++ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=../tdlib ..
 cmake --install . --target prepare_cross_compiling
 ``` 
+
+# Elenco comandi per configurazione in **BotFather**
+
+Di seguito l'elenco dei comandi da utilizzare per la configurazione del bot in **BotFather**
+
+```bash
+start - Start
+dwtelegram - To run section Telegram download
+search - To run Torrent download
+space - Space on disks
+prev - Precedent command
+setname - Change name of file in download list
+space - Show raspy memory space
+next - Next state
+dwlist - Download list
+end - Close handler
+magnet - Download torrent by magnet link
+qbittorrent - View qBittorrent command
+```
