@@ -1,5 +1,5 @@
 import logging
-from QBitTorrent import QBitTorrent
+from Classes.QBitTorrent import QBitTorrent
 from telegram import Update
 from telegram.ext import (
     ContextTypes,
@@ -95,3 +95,12 @@ async def configure(update: Update, context: ContextTypes.context) -> int:
 
     return ConversationHandler.END
 
+async def qbittorent_command(update: Update, context: ContextTypes.context) -> int:
+    await update.effective_message.reply_text("""
+                                        /status - view all torrent status
+                                        /pauseall - pause all torrent
+                                        /resumeall - resume all torrent
+                                        /forceall - force all torrent
+                                            """)
+
+    return ConversationHandler.END

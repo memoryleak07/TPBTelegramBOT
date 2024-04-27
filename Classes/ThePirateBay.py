@@ -37,7 +37,7 @@ class ThePirateBay:
                 row_button.append(InlineKeyboardButton(text=row, callback_data=row))
                 i += 1
             
-            if (i >= 2) or (categories[-1] == row_button[-1]):
+            if (i >= 2) or (categories[-1] == row_button[-1].text):
                 inline_button.append(row_button)
                 row_button = []
                 i = 0
@@ -70,7 +70,7 @@ class ThePirateBay:
                 row_button.append(InlineKeyboardButton(text=row, callback_data=row))
                 i += 1
             
-            if (i >= 3) or (categories[-1] == row_button[-1]):
+            if (i >= 3) or (categories[-1] == row_button[-1].text):
                 inline_button.append(row_button)
                 row_button = []
                 i = 0
