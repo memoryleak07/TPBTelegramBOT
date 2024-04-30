@@ -21,7 +21,7 @@ cmake --install . --target prepare_cross_compiling
 
 Di seguito l'elenco dei comandi da utilizzare per la configurazione del bot in **BotFather**
 
-```bash
+```
 start - Start
 dwtelegram - To run section Telegram download
 search - To run Torrent download
@@ -34,4 +34,36 @@ dwlist - Download list
 end - Close handler
 magnet - Download torrent by magnet link
 qbittorrent - View qBittorrent command
+```
+
+# Variabili da configurare nell'enviroment
+
+Di seguito l'elenco delle variabili da configurare nell'environment, per il debug utilizzare il file `.vscode/launch.json`.
+
+| Key                  | Obbligatorio | Descrizione                                                          | Default value                     |
+|----------------------|:------------:|----------------------------------------------------------------------|-----------------------------------|
+| BOT_TOKEN            |      SI      | Token generato con [BotFather](https://t.me/BotFather)               |                                   |
+| LOG_LEVEL            |              | Livello di logging                                                   | Error                             |
+| BASE_FILE_URL        |              | Directory di salvataggio dei file scaricati tramite telegram         | https://api.telegram.org/file/bot |
+| API_BASE_URL         |              | Endpoint delle API telegram                                          | https://api.telegram.org/bot      |
+| READ_TIMEOUT         |              | Timeout del download dei file scaricati tramite telegram             | 5.0                               |
+| QBITTORENT_URL       |      SI      | Indirizzo client QBittorrent                                         |                                   |
+| QBITTORENT_USERNAME  |              | Username per l'accesso al client QBittorrent                         |                                   |
+| QBITTORENT_PASSWORD  |              | Password per l'accesso al client QBittorrent                         |                                   |
+| IS_LOCAL_API         |              | Indica se le API di telegram sono avviate in locale                  | False                             |
+| EXTERNAL_MEMORY_PATH |              | Path dell'HDD esterno utilizzato per ottenere lo spazio Disponibile   |                                   |
+
+Esempio file `.env`
+
+```
+BOT_TOKEN=<BOT_TOKEN>
+LOG_LEVEL=<LOG_LEVEL>
+BASE_FILE_URL=<BASE_FILE_URL>
+API_BASE_URL=<API_BASE_URL>
+READ_TIMEOUT=None
+QBITTORENT_URL=<QBITTORENT_URL>
+QBITTORENT_USERNAME=<QBITTORENT_USERNAME>
+QBITTORENT_PASSWORD=<QBITTORENT_PASSWORD>
+IS_LOCAL_API=True
+EXTERNAL_MEMORY_PATH=<EXTERNAL_MEMORY_PATH>
 ```

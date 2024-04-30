@@ -15,9 +15,7 @@ from Classes.QBitTorrent import QBitTorrent
 from Classes.StoreInformation import StoreInformation
 from Classes.ThePirateBay import ThePirateBay
 
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
+# Get logger
 logger = logging.getLogger(__name__)
 
 CATEGORIES, SUBCATEGORIES, KEYWORD, CHOOSE, CONFIRM = range(5)
