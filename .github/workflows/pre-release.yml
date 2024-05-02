@@ -1,4 +1,4 @@
-name: Docker image pre prelease
+name: Docker image pre release
 
 on:
   push:

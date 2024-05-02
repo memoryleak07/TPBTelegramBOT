@@ -43,10 +43,10 @@ Di seguito l'elenco delle variabili da configurare nell'environment, per il debu
 | Key                  | Obbligatorio | Descrizione                                                          | Default value                     |
 |----------------------|:------------:|----------------------------------------------------------------------|-----------------------------------|
 | BOT_TOKEN            |      SI      | Token generato con [BotFather](https://t.me/BotFather)               |                                   |
-| LOG_LEVEL            |              | Livello di logging                                                   | Error                             |
+| LOG_LEVEL            |              | Livello di logging                                                   | ERROR                             |
 | BASE_FILE_URL        |              | Directory di salvataggio dei file scaricati tramite telegram         | https://api.telegram.org/file/bot |
 | API_BASE_URL         |              | Endpoint delle API telegram                                          | https://api.telegram.org/bot      |
-| READ_TIMEOUT         |              | Timeout del download dei file scaricati tramite telegram             | 5.0                               |
+| READ_TIMEOUT         |              | Timeout del download dei file scaricati tramite telegram. Utilizzando API avviate in locale settare a None| 5.0                               |
 | QBITTORENT_URL       |      SI      | Indirizzo client QBittorrent                                         |                                   |
 | QBITTORENT_USERNAME  |              | Username per l'accesso al client QBittorrent                         |                                   |
 | QBITTORENT_PASSWORD  |              | Password per l'accesso al client QBittorrent                         |                                   |
