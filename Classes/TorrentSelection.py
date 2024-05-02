@@ -2,14 +2,8 @@ import re
 import logging
 from telegram import ReplyKeyboardRemove, Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import (
-    Application,
-    CommandHandler,
     ContextTypes,
-    ConversationHandler,
-    MessageHandler,
-    filters,
-    CommandHandler,
-    CallbackQueryHandler
+    ConversationHandler
 )
 from Classes.QBitTorrent import QBitTorrent
 from Classes.StoreInformation import StoreInformation

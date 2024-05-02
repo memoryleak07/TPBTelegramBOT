@@ -1,5 +1,4 @@
-from tpblite import TPB
-from tpblite import CATEGORIES, ORDERS
+from tpblite import TPB, CATEGORIES, ORDERS
 import logging
 from telegram import InlineKeyboardButton
 

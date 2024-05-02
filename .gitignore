@@ -8,3 +8,4 @@ settings.json
 /Classes/__pycache__/*
 /Helpers/__pycache__/*
 /Models/__pycache__/*
+.env

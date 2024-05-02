@@ -28,6 +28,9 @@ https://t.me/noncapiscocosastasuccedendobot
 #     )
 
 import os
+# load .env file for configuration
+from dotenv import load_dotenv
+load_dotenv()
 import logging
 from Models.EnvKeysConsts import EnvKeysConsts
 
@@ -55,7 +58,12 @@ from telegram.ext import (
 )
 
 async def start(update: Update, context: CallbackContext):
-    await update.message.reply_text(f"""For torrent send /search\nfor magnet link download send /magnet\nfor telegram download send /dwtelegram""")
+    await update.message.reply_text(
+"""
+For torrent send /search
+for magnet link download send /magnet
+for telegram download send /dwtelegram
+""")
 
 
 async def error(update: Update, context: CallbackContext):
@@ -82,6 +90,10 @@ def main() -> None:
     base_file_url = os.getenv(EnvKeysConsts.BASE_FILE_URL, EnvKeysConsts.BASE_FILE_URL_DEFAULT_VALUE)
     base_url = os.getenv(EnvKeysConsts.API_BASE_URL, EnvKeysConsts.API_BASE_URL_DEFAULT_VALUE)
     read_timeout = os.getenv(EnvKeysConsts.READ_TIMEOUT, EnvKeysConsts.READ_TIMEOUT_DEFAULT_VALUE)
+    if read_timeout == 'None':
+        read_timeout = None
+    else:
+        read_timeout = float(os.getenv(EnvKeysConsts.READ_TIMEOUT, EnvKeysConsts.READ_TIMEOUT_DEFAULT_VALUE))
     # Create the Application and pass it your bot's token.
     application = Application.builder(
     ).token(

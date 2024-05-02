@@ -1,21 +1,19 @@
 # https://core.telegram.org/bots/api#botcommand
 
 import asyncio
-import json
 import logging
 import os
 import shutil
 from socket import timeout
-from telegram import InlineKeyboardMarkup, ReplyKeyboardRemove, Update
+from telegram import InlineKeyboardMarkup, Update
 from telegram.ext import (
     ConversationHandler,
     CallbackContext
 )
 from Classes.DataManage import DataManage
 from Helpers.MemoryManage import memoryManage
+from Helpers.Converters import Converters
 from Helpers.PathManage import PathManage
-from mimetypes import guess_extension
-
 from Models.DownloadStatus import DownloadStatus
 from Models.EnvKeysConsts import EnvKeysConsts
 from Models.TelegramFile import TelegramFile
@@ -23,7 +21,7 @@ from Models.TelegramFile import TelegramFile
 # Get logger
 logger = logging.getLogger(__name__)
 external_memory_path = os.getenv(EnvKeysConsts.EXTERNAL_MEMORY_PATH)
-is_local_api = os.getenv(EnvKeysConsts.IS_LOCAL_API, EnvKeysConsts.IS_LOCAL_API_DEFAULT_VALUE)
+is_local_api = Converters.string_to_bool(os.getenv(EnvKeysConsts.IS_LOCAL_API, EnvKeysConsts.IS_LOCAL_API_DEFAULT_VALUE))
 bot_token = os.getenv(EnvKeysConsts.BOT_TOKEN)
 base_file_url = os.getenv(EnvKeysConsts.BASE_FILE_URL, EnvKeysConsts.BASE_FILE_URL_DEFAULT_VALUE)
 
@@ -39,10 +37,11 @@ downloadListKey = 'download_list'
 async def dw_telegram(update: Update, context: CallbackContext):
     """For run selection path"""
     await update.message.reply_text(
-        # 'send /path for select path download'
-        #f'send:\n/ls for show dir in {await get_path(context)}\n/space for disks spaces\n/next for send file\nor send the next directory name (for create or move)'
-        f'Send:\n/space for disks spaces\n/next for send file'
-    )
+"""
+Send:
+/space for disks spaces
+/next for send file
+""")
     await ls_command(update, context)
     await start_job(update, context)
     context.user_data[downloadListKey] = False
@@ -120,7 +119,15 @@ async def ls_dir_command(update: Update, context: CallbackContext):
 async def next_command(update: Update, context: CallbackContext):
     """Run for await download file"""
     await update.message.reply_text(f'Await for file download in: {await get_path(context)}')
-    await update.message.reply_text(f'The commands available in this section are:\n/prev for select directory\n/space for disks spaces\n/dwList for show list of file and download status\n/end for exit from dw_telegram\n/setName for change file name')
+    await update.message.reply_text(
+"""
+The commands available in this section are:
+/prev for select directory
+/space for disks spaces
+/dwList for show list of file and download status
+/end for exit from dw_telegram
+/setName for change file name
+""")
     return DOC
 
 
