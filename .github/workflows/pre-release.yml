@@ -41,5 +41,5 @@ jobs:
           context: .
           file: ${{env.DOCKER_FILE_PATH}}
           push: true
-          tags: ${VERSION}
-          labels: ${VERSION}
+          tags: ${{ env.VERSION }}
+          labels: ${{ env.VERSION }}
