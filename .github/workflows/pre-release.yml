@@ -1,0 +1,45 @@
+name: Docker image pre prelease
+
+on:
+  push:
+    tags:
+    - 'v[0-9]+.[0-9]+.[0-9]+-Beta.[0-9]+'
+    - 'v[0-9]+.[0-9]+.[0-9]+-beta.[0-9]+'
+    - 'v[0-9]+.[0-9]+.[0-9]+-RC.[0-9]+'
+    - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  DOCKER_FILE_PATH: './Dockerfile'
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      # - name: Verify commit exists in origin/main
+      #   run: |
+      #     git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
+      #     git branch --remote --contains | grep origin/main
+      - name: Set VERSION variable from tag
+        run: echo "VERSION=${GITHUB_REF/refs\/tags\/v/}" >> $GITHUB_ENV
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ${{env.DOCKER_FILE_PATH}}
+          push: true
+          tags: ${{VERSION}}
+          labels: ${{VERSION}}

@@ -27,8 +27,21 @@ https://t.me/noncapiscocosastasuccedendobot
 #         f"visit https://docs.python-telegram-bot.org/en/v{TG_VER}/examples.html"
 #     )
 
-import json
+import os
+# load .env file for configuration
+from dotenv import load_dotenv
+load_dotenv()
 import logging
+from Models.EnvKeysConsts import EnvKeysConsts
+
+log_level = os.getenv(EnvKeysConsts.LOG_LEVEL, EnvKeysConsts.LOG_LEVEL_DEFALUT_VALUE)
+
+# Enable logging
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=log_level
+)
+logger = logging.getLogger(__name__)
+
 from Classes.TorrentHandlers import *
 from Classes.TorrentSelection import *
 from Classes.TelegramDownload import *
@@ -44,17 +57,13 @@ from telegram.ext import (
     CallbackContext
 )
 
-
-# Enable logging
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
-logger = logging.getLogger(__name__)
-settings = json.load(open("settings.json"))
-
-
 async def start(update: Update, context: CallbackContext):
-    await update.message.reply_text(f"""For torrent send /search\nfor magnet link download send /magnet\nfor telegram download send /dwtelegram""")
+    await update.message.reply_text(
+"""
+For torrent send /search
+for magnet link download send /magnet
+for telegram download send /dwtelegram
+""")
 
 
 async def error(update: Update, context: CallbackContext):
@@ -72,14 +81,29 @@ async def error(update: Update, context: CallbackContext):
 
 def main() -> None:
     """Run the bot."""
+    # Verify enviroment variable
+    bot_token = os.getenv(EnvKeysConsts.BOT_TOKEN)
+    qbittorent_url = os.getenv(EnvKeysConsts.QBITTORENT_URL)
+    if bot_token is None or qbittorent_url is None:
+        raise Exception(f"Uno or more variable is null: {EnvKeysConsts.BOT_TOKEN}={bot_token} | {EnvKeysConsts.QBITTORENT_URL}={qbittorent_url}")
+
+    base_file_url = os.getenv(EnvKeysConsts.BASE_FILE_URL, EnvKeysConsts.BASE_FILE_URL_DEFAULT_VALUE)
+    base_url = os.getenv(EnvKeysConsts.API_BASE_URL, EnvKeysConsts.API_BASE_URL_DEFAULT_VALUE)
+    read_timeout = os.getenv(EnvKeysConsts.READ_TIMEOUT, EnvKeysConsts.READ_TIMEOUT_DEFAULT_VALUE)
+    if read_timeout == 'None':
+        read_timeout = None
+    else:
+        read_timeout = float(os.getenv(EnvKeysConsts.READ_TIMEOUT, EnvKeysConsts.READ_TIMEOUT_DEFAULT_VALUE))
     # Create the Application and pass it your bot's token.
-    application = Application.builder().token(
-        settings['botToken']).base_url(
-            settings['baseUrl']
+    application = Application.builder(
+    ).token(
+        bot_token
+    ).base_url(
+        base_url
     ).base_file_url(
-        settings['base_file_url']
+        base_file_url
     ).read_timeout(
-        settings['read_timeout']
+        read_timeout
     ).build()
     # Add conversation handler with the states CATEGORIES, PHOTO, LOCATION, KEYWORD
     conv_handler1 = ConversationHandler(

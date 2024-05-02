@@ -1,14 +1,9 @@
-from tpblite import TPB
-from tpblite import CATEGORIES, ORDERS
+from tpblite import TPB, CATEGORIES, ORDERS
 import logging
 from telegram import InlineKeyboardButton
 
-# Enable logging
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
+# Get logger
 logger = logging.getLogger(__name__)
-#
 
 class ThePirateBay:
 

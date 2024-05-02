@@ -2,22 +2,14 @@ import re
 import logging
 from telegram import ReplyKeyboardRemove, Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import (
-    Application,
-    CommandHandler,
     ContextTypes,
-    ConversationHandler,
-    MessageHandler,
-    filters,
-    CommandHandler,
-    CallbackQueryHandler
+    ConversationHandler
 )
 from Classes.QBitTorrent import QBitTorrent
 from Classes.StoreInformation import StoreInformation
 from Classes.ThePirateBay import ThePirateBay
 
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
+# Get logger
 logger = logging.getLogger(__name__)
 
 CATEGORIES, SUBCATEGORIES, KEYWORD, CHOOSE, CONFIRM = range(5)

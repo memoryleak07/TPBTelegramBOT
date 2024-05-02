@@ -1,32 +1,29 @@
 # https://core.telegram.org/bots/api#botcommand
 
 import asyncio
-import json
 import logging
 import os
 import shutil
 from socket import timeout
-from telegram import InlineKeyboardMarkup, ReplyKeyboardRemove, Update
+from telegram import InlineKeyboardMarkup, Update
 from telegram.ext import (
     ConversationHandler,
     CallbackContext
 )
 from Classes.DataManage import DataManage
 from Helpers.MemoryManage import memoryManage
+from Helpers.Converters import Converters
 from Helpers.PathManage import PathManage
-from mimetypes import guess_extension
-
 from Models.DownloadStatus import DownloadStatus
+from Models.EnvKeysConsts import EnvKeysConsts
 from Models.TelegramFile import TelegramFile
 
-# Enable logging
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
-
+# Get logger
 logger = logging.getLogger(__name__)
-settings = json.load(open("settings.json"))
-externalMemory = settings['extMemory']
-localApi = settings['localApi']
+external_memory_path = os.getenv(EnvKeysConsts.EXTERNAL_MEMORY_PATH)
+is_local_api = Converters.string_to_bool(os.getenv(EnvKeysConsts.IS_LOCAL_API, EnvKeysConsts.IS_LOCAL_API_DEFAULT_VALUE))
+bot_token = os.getenv(EnvKeysConsts.BOT_TOKEN)
+base_file_url = os.getenv(EnvKeysConsts.BASE_FILE_URL, EnvKeysConsts.BASE_FILE_URL_DEFAULT_VALUE)
 
 dataManage = DataManage()
 destinationPathKey = 'destinationPath'
@@ -40,10 +37,11 @@ downloadListKey = 'download_list'
 async def dw_telegram(update: Update, context: CallbackContext):
     """For run selection path"""
     await update.message.reply_text(
-        # 'send /path for select path download'
-        #f'send:\n/ls for show dir in {await get_path(context)}\n/space for disks spaces\n/next for send file\nor send the next directory name (for create or move)'
-        f'Send:\n/space for disks spaces\n/next for send file'
-    )
+"""
+Send:
+/space for disks spaces
+/next for send file
+""")
     await ls_command(update, context)
     await start_job(update, context)
     context.user_data[downloadListKey] = False
@@ -53,7 +51,7 @@ async def dw_telegram(update: Update, context: CallbackContext):
 async def space(update: Update, context: CallbackContext):
     """Get disks space"""
     internalSpace = memoryManage('/')
-    extMemory = memoryManage(externalMemory)
+    extMemory = memoryManage(external_memory_path)
     await update.message.reply_text(f'Internal memory:\nTotal: {internalSpace.total}GB\nUsed: {internalSpace.used}GB\nFree: {internalSpace.free}GB')
     await update.message.reply_text(f'External memory:\nTotal: {extMemory.total}GB\nUsed: {extMemory.used}GB\nFree: {extMemory.free}GB')
 
@@ -96,9 +94,9 @@ async def ls_command(update: Update, context: CallbackContext, message=""):
         directories = PathManage.GetInlineAllDirectories(await get_path(context))
     except:
         #se la directory viene cancellata esternamente riesce a restituire le directory
-        logger.info(f'{await get_path(context)} not found, change on context with {externalMemory}')
-        context.user_data[destinationPathKey] = externalMemory
-        directories = PathManage.GetInlineAllDirectories(externalMemory)
+        logger.info(f'{await get_path(context)} not found, change on context with {external_memory_path}')
+        context.user_data[destinationPathKey] = external_memory_path
+        directories = PathManage.GetInlineAllDirectories(external_memory_path)
 
     if update.callback_query:
         dir_message = await update.callback_query.message.reply_text(message, reply_markup=InlineKeyboardMarkup(
@@ -121,7 +119,15 @@ async def ls_dir_command(update: Update, context: CallbackContext):
 async def next_command(update: Update, context: CallbackContext):
     """Run for await download file"""
     await update.message.reply_text(f'Await for file download in: {await get_path(context)}')
-    await update.message.reply_text(f'The commands available in this section are:\n/prev for select directory\n/space for disks spaces\n/dwList for show list of file and download status\n/end for exit from dw_telegram\n/setName for change file name')
+    await update.message.reply_text(
+"""
+The commands available in this section are:
+/prev for select directory
+/space for disks spaces
+/dwList for show list of file and download status
+/end for exit from dw_telegram
+/setName for change file name
+""")
     return DOC
 
 
@@ -165,7 +171,7 @@ async def append_download(update: Update, context: CallbackContext):
 async def get_path(context: CallbackContext):
     """Get path from user data if exist or set default"""
     if destinationPathKey not in context.user_data:
-        context.user_data[destinationPathKey] = externalMemory
+        context.user_data[destinationPathKey] = external_memory_path
     return context.user_data[destinationPathKey]
 
 
@@ -189,14 +195,14 @@ async def downloader_async(data: TelegramFile, context: CallbackContext):
         await dataManage.update_file(data)
         dw = await context.bot.get_file(data.file.file_id)
         logger.info(f"API download of '{data.get_file_name()}' executed\nSaved at '{dw.file_path}'")
-        if not localApi:
+        if not is_local_api:
             # Scarica localmente il file
             await dw.download(custom_path=data.get_full_destination_path())
         else:
             # Muove il file scaricato dall'API nella directory desiderata
             # 'http://192.168.0.18:8880/file/bot<bottoken>//home/pi/Documents/telegram-bot-api/build/<token>/videos/file_7.mp4'
             file_location = f'{dw.file_path}'.replace(
-                f'{settings["base_file_url"]}{settings["botToken"]}/', '')
+                f'{base_file_url}{bot_token}/', '')
             logger.info(f"file_location: {file_location}")
             logger.info(f"full destination path: {data.get_full_destination_path()}")
             destination_path = data.get_full_destination_path()

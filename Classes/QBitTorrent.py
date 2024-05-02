@@ -6,16 +6,15 @@
 
 # Raspberry installation: https://pimylifeup.com/raspberry-pi-qbittorrent/
 import logging
+import os
 from qbittorrent import Client
+from Models.EnvKeysConsts import EnvKeysConsts
 
-CLIENT = 'http://127.0.0.1:8980/'
-USER = "admin"
-PASSWORD = "adminadmin"
+CLIENT = os.getenv(EnvKeysConsts.QBITTORENT_URL)
+USER = os.getenv(EnvKeysConsts.QBITTORENT_USERNAME)
+PASSWORD = os.getenv(EnvKeysConsts.QBITTORENT_PASSWORD)
 
-# Enable logging
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
+# Get logger
 logger = logging.getLogger(__name__)
 
 
