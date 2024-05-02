@@ -1,5 +1,5 @@
 # Usa un'immagine di base di Python
-FROM python:3.9-slim
+FROM python:3.10-slim
 
 # Imposta il work directory nel container
 WORKDIR /app
@@ -12,7 +12,7 @@ COPY MainTelegramBOT.py MainTelegramBOT.py
 COPY requirements.txt .
 
 # Installa le dipendenze del progetto
-RUN pip install --no-cache-dir -r requirements.txt
+RUN python3 -m pip install --no-cache-dir -r requirements.txt
 
 # Comando per avviare l'applicazione
-CMD ["python", "MainTelegramBOT.py"]
+CMD ["python3", "MainTelegramBOT.py"]
