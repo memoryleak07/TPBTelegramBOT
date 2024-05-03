@@ -120,6 +120,7 @@ Di seguito l'elenco delle variabili da configurare nell'environment, per il debu
 | QBITTORENT_PASSWORD  |              | Password per l'accesso al client QBittorrent                         |                                   |
 | IS_LOCAL_API         |              | Indica se le API di telegram sono avviate in locale                  | False                             |
 | EXTERNAL_MEMORY_PATH |              | Path dell'HDD esterno utilizzato per ottenere lo spazio Disponibile  |                                   |
+| USERS_WITHE_LIST     |              | Lista di username autorizzati all'utilizzo del bot separati da virgola. Se non vengono specificati l'accesso è autorizzato a tutti| |
 
 Per eseguire il bot al di fuori di un Docker, è possibile aggiungere un file `.env` nel path di esecuzione, per non configurare le variabili a livello di sistema operativo.
 Di seguito un esempio del file.
@@ -135,4 +136,5 @@ QBITTORENT_USERNAME=<QBITTORENT_USERNAME>
 QBITTORENT_PASSWORD=<QBITTORENT_PASSWORD>
 IS_LOCAL_API=True
 EXTERNAL_MEMORY_PATH=<EXTERNAL_MEMORY_PATH>
+USERS_WITHE_LIST=<USER_LIST_SEPARATED_FROM_COMMA>
 ```

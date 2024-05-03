@@ -56,6 +56,27 @@ from telegram.ext import (
     CallbackQueryHandler,
     CallbackContext
 )
+from functools import wraps
+
+#Get users withe list or set empty list
+whitelist_usernames = os.getenv(EnvKeysConsts.USERS_WITHE_LIST)
+if whitelist_usernames:
+    whitelist_usernames = whitelist_usernames.split(',')
+else:
+    whitelist_usernames = []
+
+def restricted(func):
+    """Method for restricting bot access"""
+    @wraps(func)
+    async def wrapped(update, context, *args, **kwargs):
+        username = update.effective_user.username
+        if username in whitelist_usernames or len(whitelist_usernames) == 0:
+            return await func(update, context, *args, **kwargs)
+        else:
+            await context.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text="Sorry, you are not authorized to contact this bot.")
+    return wrapped
 
 async def start(update: Update, context: CallbackContext):
     await update.message.reply_text(
@@ -107,7 +128,7 @@ def main() -> None:
     ).build()
     # Add conversation handler with the states CATEGORIES, PHOTO, LOCATION, KEYWORD
     conv_handler1 = ConversationHandler(
-        entry_points=[CommandHandler("search", start_torrent)],
+        entry_points=[CommandHandler("search", restricted(start_torrent))],
         states={
             CATEGORIES: [
                 CallbackQueryHandler(categories),
@@ -134,7 +155,7 @@ def main() -> None:
     )
 
     conv_handler2 = ConversationHandler(
-        entry_points=[CommandHandler('dwtelegram', dw_telegram)],
+        entry_points=[CommandHandler('dwtelegram', restricted(dw_telegram))],
         states={
             SPECIFY: [
                 CommandHandler('ls', ls_dir_command),
@@ -162,7 +183,7 @@ def main() -> None:
     )
 
     conv_handler3 = ConversationHandler(
-        entry_points=[CommandHandler("magnet", download_magnet)],
+        entry_points=[CommandHandler("magnet", restricted(download_magnet))],
         states={
             DOWNLOAD_MODE: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, download_by_link),
@@ -174,13 +195,13 @@ def main() -> None:
     application.add_handler(conv_handler1)
     application.add_handler(conv_handler2)
     application.add_handler(conv_handler3)
-    application.add_handler(CommandHandler("space", space))
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("qbittorrent", qbittorent_command))
-    application.add_handler(CommandHandler("status", status))
-    application.add_handler(CommandHandler("pauseall", pauseall))
-    application.add_handler(CommandHandler("resumeall", resumeall))
-    application.add_handler(CommandHandler("forceall", forceall))
+    application.add_handler(CommandHandler("space", restricted(space)))
+    application.add_handler(CommandHandler("start", restricted(start)))
+    application.add_handler(CommandHandler("qbittorrent", restricted(qbittorent_command)))
+    application.add_handler(CommandHandler("status", restricted(status)))
+    application.add_handler(CommandHandler("pauseall", restricted(pauseall)))
+    application.add_handler(CommandHandler("resumeall", restricted(resumeall)))
+    application.add_handler(CommandHandler("forceall", restricted(forceall)))
 
     # log all errors
     application.add_error_handler(error)
