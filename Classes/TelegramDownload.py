@@ -20,18 +20,20 @@ from Models.TelegramFile import TelegramFile
 
 # Get logger
 logger = logging.getLogger(__name__)
-external_memory_path = os.getenv(EnvKeysConsts.EXTERNAL_MEMORY_PATH)
+destination_path = os.getenv(EnvKeysConsts.DESTINATION_PATH)
 is_local_api = Converters.string_to_bool(os.getenv(EnvKeysConsts.IS_LOCAL_API, EnvKeysConsts.IS_LOCAL_API_DEFAULT_VALUE))
 bot_token = os.getenv(EnvKeysConsts.BOT_TOKEN)
 base_file_url = os.getenv(EnvKeysConsts.BASE_FILE_URL, EnvKeysConsts.BASE_FILE_URL_DEFAULT_VALUE)
+get_internal_usage = Converters.string_to_bool(os.getenv(EnvKeysConsts.GET_INTERNAL_USAGE, EnvKeysConsts.GET_INTERNAL_USAGE_DEFALUT_VALUE))
 
-dataManage = DataManage()
-destinationPathKey = 'destinationPath'
+data_manage = DataManage()
+destination_path_key = 'destination_path'
 chatIdKey = 'chat_id'
-jobStatusKey = 'jobStatus'
+job_status_key = 'job_status'
 last_dir_message = 'message_dir_id'
 SPECIFY, DOC, SETNAME = range(3)
-downloadListKey = 'download_list'
+download_list_key = 'download_list'
+parse_mode='Markdown'
 
 
 async def dw_telegram(update: Update, context: CallbackContext):
@@ -44,16 +46,30 @@ Send:
 """)
     await ls_command(update, context)
     await start_job(update, context)
-    context.user_data[downloadListKey] = False
+    context.user_data[download_list_key] = False
     return SPECIFY
 
+async def reply_memory_response(update: Update, response: memoryManage, prefix_message: str):
+    if response.total == response.error_message:
+        await update.message.reply_text(
+            f'{prefix_message}: {response.error_message}',
+            parse_mode=parse_mode)
+    else:
+        await update.message.reply_text(
+f"""
+{prefix_message}:
+Total: `{response.total}GB`
+Used: `{response.used}GB`
+Free: `{response.free}GB`
+""", parse_mode=parse_mode)
 
 async def space(update: Update, context: CallbackContext):
     """Get disks space"""
-    internalSpace = memoryManage('/')
-    extMemory = memoryManage(external_memory_path)
-    await update.message.reply_text(f'Internal memory:\nTotal: {internalSpace.total}GB\nUsed: {internalSpace.used}GB\nFree: {internalSpace.free}GB')
-    await update.message.reply_text(f'External memory:\nTotal: {extMemory.total}GB\nUsed: {extMemory.used}GB\nFree: {extMemory.free}GB')
+    destination_space = memoryManage(destination_path)
+    if get_internal_usage:
+        internal_space = memoryManage('/')
+        await reply_memory_response(update, internal_space, "Internal memory")
+    await reply_memory_response(update, destination_space, "Destinsyion memory")
 
 async def space_on_doc(update: Update, context: CallbackContext):
     """Get disks space on video handler"""
@@ -66,21 +82,29 @@ async def space_on_specify(update: Update, context: CallbackContext):
     await space(update, context)
     return SPECIFY
 
+async def delete_old_message_and_update_path(update: Update, context: CallbackContext, update_path: bool):
+    """Delete old message and update path"""
+    try:
+        if update.callback_query:
+            if update_path:
+                await set_path(context, update.callback_query.data)
+            # controllo per cancellare l'ultimo messaggio su callback query
+            if last_dir_message in context.user_data:
+                await context.bot.deleteMessage(message_id=context.user_data[last_dir_message],
+                                            chat_id=update.callback_query.message.chat_id)
+        else:
+            if update_path:
+                await set_path(context, update.message.text)
+            # controllo per cancellare l'ultimo messaggio
+            if last_dir_message in context.user_data:
+                await context.bot.deleteMessage(message_id=context.user_data[last_dir_message],
+                                                chat_id=update.message.chat_id)
+    except:
+        return
 
 async def dir_specify(update: Update, context: CallbackContext):
     """Reply dir to save"""
-    if update.callback_query:
-        await set_path(context, update.callback_query.data)
-        # controllo per cancellare l'ultimo messaggio
-        if last_dir_message in context.user_data:
-            await context.bot.deleteMessage(message_id=context.user_data[last_dir_message],
-                                      chat_id=update.callback_query.message.chat_id)
-    else:
-        # controllo per cancellare l'ultimo messaggio
-        if last_dir_message in context.user_data:
-            await context.bot.deleteMessage(message_id=context.user_data[last_dir_message],
-                                            chat_id=update.message.chat_id)
-        await set_path(context, update.message.text)
+    await delete_old_message_and_update_path(update, context, True)
 
     message = f'{await get_path(context)}\n/next to download or\n'
     await ls_command(update, context, message)
@@ -94,9 +118,9 @@ async def ls_command(update: Update, context: CallbackContext, message=""):
         directories = PathManage.GetInlineAllDirectories(await get_path(context))
     except:
         #se la directory viene cancellata esternamente riesce a restituire le directory
-        logger.info(f'{await get_path(context)} not found, change on context with {external_memory_path}')
-        context.user_data[destinationPathKey] = external_memory_path
-        directories = PathManage.GetInlineAllDirectories(external_memory_path)
+        logger.info(f'{await get_path(context)} not found, change on context with {destination_path}')
+        context.user_data[destination_path_key] = destination_path
+        directories = PathManage.GetInlineAllDirectories(destination_path)
 
     if update.callback_query:
         dir_message = await update.callback_query.message.reply_text(message, reply_markup=InlineKeyboardMarkup(
@@ -118,7 +142,8 @@ async def ls_dir_command(update: Update, context: CallbackContext):
 
 async def next_command(update: Update, context: CallbackContext):
     """Run for await download file"""
-    await update.message.reply_text(f'Await for file download in: {await get_path(context)}')
+    await delete_old_message_and_update_path(update, context, False)
+    await update.message.reply_text(f'Send file for download in path: `{await get_path(context)}`', parse_mode=parse_mode)
     await update.message.reply_text(
 """
 The commands available in this section are:
@@ -163,23 +188,23 @@ async def append_download(update: Update, context: CallbackContext):
         destinationPath=dest,
         chat=update.message.chat,
         caption_message=update.message.caption)
-    await dataManage.update_file(file)
+    await data_manage.update_file(file)
 
     return DOC
 
 
 async def get_path(context: CallbackContext):
     """Get path from user data if exist or set default"""
-    if destinationPathKey not in context.user_data:
-        context.user_data[destinationPathKey] = external_memory_path
-    return context.user_data[destinationPathKey]
+    if destination_path_key not in context.user_data:
+        context.user_data[destination_path_key] = destination_path
+    return context.user_data[destination_path_key]
 
 
 async def set_path(context: CallbackContext, newDir):
     """Set path in user data"""
     dest = await get_path(context)
     dest = PathManage.merge_path(dest, newDir)
-    context.user_data[destinationPathKey] = dest
+    context.user_data[destination_path_key] = dest
     PathManage.create_dir(dest)
 
 
@@ -192,7 +217,7 @@ async def downloader_async(data: TelegramFile, context: CallbackContext):
     logger.info(f"Path '{path}' created")
     try:
         data.status = DownloadStatus.DOWNLOADING
-        await dataManage.update_file(data)
+        await data_manage.update_file(data)
         dw = await context.bot.get_file(data.file.file_id)
         logger.info(f"API download of '{data.get_file_name()}' executed\nSaved at '{dw.file_path}'")
         if not is_local_api:
@@ -210,11 +235,11 @@ async def downloader_async(data: TelegramFile, context: CallbackContext):
     except Exception as e:
         logger.exception(e)
         data.status = DownloadStatus.ERROR
-        await dataManage.update_file(data)
+        await data_manage.update_file(data)
         raise e
     
     data.status = DownloadStatus.DOWNLOADED
-    await dataManage.update_file(data)
+    await data_manage.update_file(data)
 
     logger.info(f"End downloader, file saved {data.get_full_destination_path()}")
     await context.bot.send_message(chat_id=data.chat.id, text=f'File \"{data.get_file_name()}\" downloaded successfully!')
@@ -223,7 +248,7 @@ async def downloader_async(data: TelegramFile, context: CallbackContext):
 async def check_and_download(context):
     """Job scheduled"""
     tasks = []
-    for d in await dataManage.get_workable_list():
+    for d in await data_manage.get_workable_list():
         tasks.append(asyncio.create_task(downloader_async(d, context)))
 
     if len(tasks) > 0:
@@ -232,12 +257,12 @@ async def check_and_download(context):
 
 async def start_job(update: Update, context: CallbackContext):
     """Schedule a new job if not exist"""
-    if jobStatusKey not in context.user_data:
+    if job_status_key not in context.user_data:
         if len(context.job_queue.get_jobs_by_name(update.message.from_user.id)) == 0:
             # Schedulo il job ogni 3 minuti
             context.job_queue.run_repeating(
                 check_and_download, 180, first=10, context=update.message.chat.id, name=str(update.message.from_user.id))
-        context.user_data[jobStatusKey] = True
+        context.user_data[job_status_key] = True
 
 
 async def dw_list(update: Update, context: CallbackContext):
@@ -246,7 +271,7 @@ async def dw_list(update: Update, context: CallbackContext):
     return DOC
 
 async def execute_dw_list_command(update: Update, context: CallbackContext):
-    download_list = await dataManage.get_view_download_list()
+    download_list = await data_manage.get_view_download_list()
     items_length = 20
     if len(download_list) > 0:
         for items in zip(*(iter(download_list),) * items_length):
@@ -259,11 +284,11 @@ async def execute_dw_list_command(update: Update, context: CallbackContext):
         await update.message.reply_text("Send /setsNew for set all download status \"ERROR\" in \"NEW\"")
     else:
         await update.message.reply_text("Download list is empty")
-    context.user_data[downloadListKey] = True
+    context.user_data[download_list_key] = True
 
 async def set_to_new(update: Update, context: CallbackContext):
     """Set to new all file in error state"""
-    await dataManage.set_all_to_new()
+    await data_manage.set_all_to_new()
     await update.message.reply_text("Update executed!")
     return DOC
 
@@ -274,12 +299,12 @@ async def run_set_name(update: Update, context: CallbackContext):
 
 async def set_name_to_file(update: Update, context: CallbackContext):
     """Set to new all file in error state"""
-    if context.user_data[downloadListKey]:
+    if context.user_data[download_list_key]:
         if '|' in update.message.text and len(update.message.text.split('|')) > 0:
             message = update.message.text.split('|')
-            await dataManage.update_file_name(int(message[0]) - 1, message[1])
+            await data_manage.update_file_name(int(message[0]) - 1, message[1])
             await update.message.reply_text(f"Name {message[1]} setted. Submit another name to change or send the '/nameEnd' command to return to the download")
-            context.user_data[downloadListKey] = False
+            context.user_data[download_list_key] = False
         else:
             await update.message.reply_text("The number must be indicated first and then the name and separated by pipe (1|name) or send the '/nameEnd' command to return to the download.")
     else:
