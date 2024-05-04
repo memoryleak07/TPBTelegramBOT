@@ -1,13 +1,16 @@
-import psutil
+import os
 
 
 class memoryManage:
-    total = 0
-    used = 0
-    free = 0
+    total = ""
+    used = ""
+    free = ""
 
     def __init__(self, path):
-        hdd = psutil.disk_usage(path)
-        self.total = str(round(hdd.total / (2**30), 2))
-        self.used = str(round(hdd.used / (2**30), 2))
-        self.free = str(round(hdd.free / (2**30), 2))
+        try:
+            st = os.statvfs(path)
+            self.total = round((st.f_frsize * st.f_blocks) / (1024 ** 3), 2)
+            self.free = round((st.f_frsize * st.f_bavail) / (1024 ** 3), 2)
+            self.used = round(self.total - self.free, 2)
+        except:
+            self.total = self.free = self.used = "`Memory error`"
