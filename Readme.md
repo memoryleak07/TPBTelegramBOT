@@ -119,9 +119,10 @@ Di seguito l'elenco delle variabili da configurare nell'environment, per il debu
 | QBITTORENT_USERNAME  |              | Username per l'accesso al client QBittorrent                         |                                   |
 | QBITTORENT_PASSWORD  |              | Password per l'accesso al client QBittorrent                         |                                   |
 | IS_LOCAL_API         |              | Indica se le API di telegram sono avviate in locale                  | False                             |
-| DESTINATION_PATH     |              | Path di salvataggio dei file scaricati tramite telegram. Attraverso tale path si ottine anche lo spazio di archiviazione: disponibile, usato e totale | |
+| DESTINATION_PATH     |      SI      | Path di salvataggio dei file scaricati tramite telegram. Attraverso tale path si ottine anche lo spazio di archiviazione: disponibile, usato e totale | |
 | USERS_WITHE_LIST     |              | Lista di username autorizzati all'utilizzo del bot separati da virgola. Se non vengono specificati l'accesso è autorizzato a tutti | |
 | GET_INTERNAL_USAGE   |              | Indica se ottenere le info di archiviazione della memoria interna    | False |
+| TELEGRAM_DOWNLOAD_DATA_FILE_PATH | SI | Indica il path di salvataggio del file `data.dict` utilizzato per la storicizzazione dei file da scaricare tramite telegram | |
 
 Per eseguire il bot al di fuori di un Docker, è possibile aggiungere un file `.env` nel path di esecuzione, per non configurare le variabili a livello di sistema operativo.
 Di seguito un esempio del file.
@@ -139,4 +140,5 @@ IS_LOCAL_API=True
 DESTINATION_PATH=<DESTINATION_PATH>
 USERS_WITHE_LIST=<USER_LIST_SEPARATED_FROM_COMMA>
 GET_INTERNAL_USAGE=False
+TELEGRAM_DOWNLOAD_DATA_FILE_PATH=<TELEGRAM_DOWNLOAD_DATA_FILE_PATH>
 ```

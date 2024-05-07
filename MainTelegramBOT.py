@@ -106,7 +106,10 @@ def main() -> None:
     bot_token = os.getenv(EnvKeysConsts.BOT_TOKEN)
     qbittorent_url = os.getenv(EnvKeysConsts.QBITTORENT_URL)
     if bot_token is None or qbittorent_url is None:
-        raise Exception(f"Uno or more variable is null: {EnvKeysConsts.BOT_TOKEN}={bot_token} | {EnvKeysConsts.QBITTORENT_URL}={qbittorent_url}")
+        raise Exception(
+            "Uno or more variable is null:" +
+            f"{EnvKeysConsts.BOT_TOKEN}={bot_token} | " +
+            f"{EnvKeysConsts.QBITTORENT_URL}={qbittorent_url}")
 
     base_file_url = os.getenv(EnvKeysConsts.BASE_FILE_URL, EnvKeysConsts.BASE_FILE_URL_DEFAULT_VALUE)
     base_url = os.getenv(EnvKeysConsts.API_BASE_URL, EnvKeysConsts.API_BASE_URL_DEFAULT_VALUE)

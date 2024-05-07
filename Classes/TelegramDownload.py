@@ -25,6 +25,13 @@ is_local_api = Converters.string_to_bool(os.getenv(EnvKeysConsts.IS_LOCAL_API, E
 bot_token = os.getenv(EnvKeysConsts.BOT_TOKEN)
 base_file_url = os.getenv(EnvKeysConsts.BASE_FILE_URL, EnvKeysConsts.BASE_FILE_URL_DEFAULT_VALUE)
 get_internal_usage = Converters.string_to_bool(os.getenv(EnvKeysConsts.GET_INTERNAL_USAGE, EnvKeysConsts.GET_INTERNAL_USAGE_DEFALUT_VALUE))
+telegram_download_data_file_path = os.getenv(EnvKeysConsts.TELEGRAM_DOWNLOAD_DATA_FILE_PATH)
+
+if not os.path.exists(telegram_download_data_file_path):
+    raise Exception(f"The data file path '{telegram_download_data_file_path}' not exist")
+
+if not os.path.exists(destination_path):
+    raise Exception(f"The destination path '{destination_path}' not exist")
 
 data_manage = DataManage()
 destination_path_key = 'destination_path'

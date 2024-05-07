@@ -2,20 +2,21 @@ import pickle
 import os
 from Models.DownloadStatus import DownloadStatus
 
+from Models.EnvKeysConsts import EnvKeysConsts
 from Models.TelegramFile import TelegramFile
 
 
 class DataManage:
-    _fileName = 'dataList.dict'
-
     def __init__(self) -> None:
+        self.file_name = os.getenv(EnvKeysConsts.TELEGRAM_DOWNLOAD_DATA_FILE_PATH)
+        self.file_name = os.path.join(self.file_name, 'data.dict')
         self.Data = []
         self.load_data()
 
     def load_data(self) -> None:
         """Load self.Data from file on first run"""
-        if (os.path.exists(self._fileName)):
-            with open(self._fileName, 'rb') as f:
+        if os.path.exists(self.file_name):
+            with open(self.file_name, 'rb') as f:
                 self.Data = pickle.load(f)
             # Set to NEW status all file
             for d in self.Data:
@@ -24,7 +25,7 @@ class DataManage:
         self.write_data()
 
     def write_data(self) -> None:
-        with open(self._fileName, 'wb') as f:
+        with open(self.file_name, 'wb') as f:
             pickle.dump(self.Data, f)
 
     async def update_file(self, file: TelegramFile):
