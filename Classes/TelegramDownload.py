@@ -11,7 +11,7 @@ from telegram.ext import (
     CallbackContext
 )
 from Classes.DataManage import DataManage
-from Helpers.MemoryManage import memoryManage
+from Helpers.MemoryManage import MemoryManage
 from Helpers.Converters import Converters
 from Helpers.PathManage import PathManage
 from Models.DownloadStatus import DownloadStatus
@@ -48,7 +48,7 @@ async def dw_telegram(update: Update, context: CallbackContext):
     await update.message.reply_text(
 """
 Send:
-/space for disks spaces
+/space for disk space
 /next for send file
 """)
     await ls_command(update, context)
@@ -56,7 +56,7 @@ Send:
     context.user_data[download_list_key] = False
     return SPECIFY
 
-async def reply_memory_response(update: Update, response: memoryManage, prefix_message: str):
+async def reply_memory_response(update: Update, response: MemoryManage, prefix_message: str):
     if response.total == response.error_message:
         await update.message.reply_text(
             f'{prefix_message}: {response.error_message}',
@@ -72,11 +72,11 @@ Free: `{response.free}GB`
 
 async def space(update: Update, context: CallbackContext):
     """Get disks space"""
-    destination_space = memoryManage(destination_path)
+    destination_space = MemoryManage(destination_path)
     if get_internal_usage:
-        internal_space = memoryManage('/')
+        internal_space = MemoryManage('/')
         await reply_memory_response(update, internal_space, "Internal memory")
-    await reply_memory_response(update, destination_space, "Destinsyion memory")
+    await reply_memory_response(update, destination_space, "Destination memory")
 
 async def space_on_doc(update: Update, context: CallbackContext):
     """Get disks space on video handler"""

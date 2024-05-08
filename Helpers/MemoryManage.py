@@ -1,7 +1,7 @@
 import os
 
 
-class memoryManage:
+class MemoryManage:
     total = ""
     used = ""
     free = ""
