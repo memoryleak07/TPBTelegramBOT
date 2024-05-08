@@ -9,3 +9,4 @@ settings.json
 /Helpers/__pycache__/*
 /Models/__pycache__/*
 .env
+/data.dict

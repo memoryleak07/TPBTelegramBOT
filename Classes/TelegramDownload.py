@@ -89,54 +89,55 @@ async def space_on_specify(update: Update, context: CallbackContext):
     await space(update, context)
     return SPECIFY
 
-async def delete_old_message_and_update_path(update: Update, context: CallbackContext, update_path: bool):
+async def delete_old_message_and_update_path(update: Update, context: CallbackContext, update_path: bool) -> str:
     """Delete old message and update path"""
     try:
+        message = ""
         if update.callback_query:
             if update_path:
-                await set_path(context, update.callback_query.data)
+                message = await set_path(context, update.callback_query.data)
             # controllo per cancellare l'ultimo messaggio su callback query
             if last_dir_message in context.user_data:
                 await context.bot.deleteMessage(message_id=context.user_data[last_dir_message],
                                             chat_id=update.callback_query.message.chat_id)
         else:
             if update_path:
-                await set_path(context, update.message.text)
+                message = await set_path(context, update.message.text)
             # controllo per cancellare l'ultimo messaggio
             if last_dir_message in context.user_data:
                 await context.bot.deleteMessage(message_id=context.user_data[last_dir_message],
                                                 chat_id=update.message.chat_id)
+        return message
     except:
-        return
+        return "Generic error on `delete_old_message_and_update_path` method\n"
 
 async def dir_specify(update: Update, context: CallbackContext):
     """Reply dir to save"""
-    await delete_old_message_and_update_path(update, context, True)
+    message = await delete_old_message_and_update_path(update, context, True)
 
-    message = f'{await get_path(context)}\n/next to download or\n'
     await ls_command(update, context, message)
     return SPECIFY
 
 
 async def ls_command(update: Update, context: CallbackContext, message=""):
     """Show list of directory"""
-    message = f'{message}select or send the next directory name (for create or move)'
     try:
-        directories = PathManage.GetInlineAllDirectories(await get_path(context))
+        directories = PathManage.GetInlineAllDirectories(await get_path(context), destination_path)
     except:
         #se la directory viene cancellata esternamente riesce a restituire le directory
         logger.info(f'{await get_path(context)} not found, change on context with {destination_path}')
         context.user_data[destination_path_key] = destination_path
-        directories = PathManage.GetInlineAllDirectories(destination_path)
+        directories = PathManage.GetInlineAllDirectories(destination_path, destination_path)
 
+    message = f'{message}The destination path is `{await get_path(context)}`\nselect or send the next directory name (for create and move in)'
     if update.callback_query:
         dir_message = await update.callback_query.message.reply_text(message, reply_markup=InlineKeyboardMarkup(
-                                    inline_keyboard=directories, resize_keyboard=True)
-                                    )
+                                    inline_keyboard=directories, resize_keyboard=True),
+                                    parse_mode=parse_mode)
     else:
         dir_message = await update.message.reply_text(message, reply_markup=InlineKeyboardMarkup(
-                                    inline_keyboard=directories, resize_keyboard=True)
-                                    )
+                                    inline_keyboard=directories, resize_keyboard=True),
+                                    parse_mode=parse_mode)
     context.user_data[last_dir_message] = dir_message.message_id
 
 
@@ -149,8 +150,8 @@ async def ls_dir_command(update: Update, context: CallbackContext):
 
 async def next_command(update: Update, context: CallbackContext):
     """Run for await download file"""
-    await delete_old_message_and_update_path(update, context, False)
-    await update.message.reply_text(f'Send file for download in path: `{await get_path(context)}`', parse_mode=parse_mode)
+    message = await delete_old_message_and_update_path(update, context, False)
+    await update.message.reply_text(f'{message}Send file for download in path: `{await get_path(context)}`', parse_mode=parse_mode)
     await update.message.reply_text(
 """
 The commands available in this section are:
@@ -207,12 +208,15 @@ async def get_path(context: CallbackContext):
     return context.user_data[destination_path_key]
 
 
-async def set_path(context: CallbackContext, newDir):
+async def set_path(context: CallbackContext, new_dir: str) -> str:
     """Set path in user data"""
     dest = await get_path(context)
-    dest = PathManage.merge_path(dest, newDir)
+    if new_dir.startswith("/") and not PathManage.is_path_contained(new_dir, dest):
+        return f"The specified path '`{new_dir}`' is not contained in root path '`{destination_path}`'\n"
+    dest = PathManage.merge_path(dest, new_dir)
     context.user_data[destination_path_key] = dest
     PathManage.create_dir(dest)
+    return ""
 
 
 async def downloader_async(data: TelegramFile, context: CallbackContext):

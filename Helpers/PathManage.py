@@ -25,12 +25,15 @@ class PathManage:
 
         return dirs
 
-    def GetInlineAllDirectories(path):
+    def GetInlineAllDirectories(path, root_path):
         inline_button = []
         row_button = []
         i = 1
         directories = PathManage.get_dir_list(path)
 
+        if not PathManage.is_path_contained(path, root_path):
+            raise Exception(f"The path '{path}' is not contained in '{root_path}'")
+        
         row_button.append(InlineKeyboardButton(text='..', callback_data='..'))
         for row in directories:
             if i < 2:
@@ -45,3 +48,7 @@ class PathManage:
         if len(directories) == 0:
             inline_button.append(row_button)
         return inline_button
+
+    def is_path_contained(inner_path, outer_path):
+        common_path = os.path.commonpath([inner_path, outer_path])
+        return os.path.samefile(common_path, outer_path)
