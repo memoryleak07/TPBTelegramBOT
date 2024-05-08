@@ -70,11 +70,12 @@ version: '3'
 services:
   telegram-bot:
     image: telegram-bot-api:latest
+    container_name: telegram-bot-api
     ports:
       - 8880:8880
     volumes:
-      - $TELEGRAM_DATA_PATH:/data
-    command: ./build/telegram-bot-api --local --api-id=$API_ID --api-hash=$API_HASH --dir=/data --http-port=8880
+      - $LOCAL_DESTINATION_PATH:/data
+    command: ./build/telegram-bot-api --local --api-id=$API_ID --api-hash=$API_HASH --dir=/data/telegram-api --http-port=8880
 ```
 
 che necessita delle seguenti variabili, che si ottengono dalla pagina Telegram dedicata [guida](https://core.telegram.org/api/obtaining_api_id#obtaining-api-id), caricabili utilizzando un `.env` file
@@ -82,7 +83,7 @@ che necessita delle seguenti variabili, che si ottengono dalla pagina Telegram d
 ```
 API_ID=<id>
 API_HASH=<hash>
-TELEGRAM_DATA_PATH=<telegram_data_path>
+LOCAL_DESTINATION_PATH=<telegram_data_path>
 ```
 
 # Elenco comandi per configurazione in **BotFather**
@@ -141,4 +142,61 @@ DESTINATION_PATH=<DESTINATION_PATH>
 USERS_WITHE_LIST=<USER_LIST_SEPARATED_FROM_COMMA>
 GET_INTERNAL_USAGE=False
 TELEGRAM_DOWNLOAD_DATA_FILE_PATH=<TELEGRAM_DOWNLOAD_DATA_FILE_PATH>
+```
+
+### Immagine Docker
+Per generare un immagine docker si può utilizzare il seguente `Dockerfile`
+
+```Dockerfile
+# Usa un'immagine di base di Python
+FROM python:3.10-slim
+
+RUN apt-get update && apt-get install -y \
+    git \
+    gcc python3-dev
+    
+RUN git clone --recursive https://github.com/memoryleak07/TPBTelegramBOT.git /TPBTelegramBOT
+
+WORKDIR /TPBTelegramBOT
+
+RUN python3 -m pip install --upgrade pip
+RUN python3 -m pip install --no-cache-dir -r requirements.txt
+
+# Comando per avviare l'applicazione
+CMD ["python3", "MainTelegramBOT.py"]
+```
+
+Per avviarlo può essere utilizzato il seguente `docker-compose`
+
+```docker-compose
+version: '3'
+
+services:
+  telegram-bot:
+    image: tpb-telegram-bot:latest
+    depends_on:
+      - telegram-bot-api
+    volumes:
+      - $LOCAL_DESTINATION_PATH:/data
+    environment:
+      - LOG_LEVEL=$LOG_LEVEL
+      - BOT_TOKEN=$BOT_TOKEN
+      - BASE_FILE_URL=$BASE_FILE_URL
+      - API_BASE_URL=$API_BASE_URL
+      - READ_TIMEOUT=$READ_TIMEOUT
+      - QBITTORENT_URL=$QBITTORENT_URL
+      - QBITTORENT_USERNAME=$QBITTORENT_USERNAME
+      - QBITTORENT_PASSWORD=$QBITTORENT_PASSWORD
+      - IS_LOCAL_API=$IS_LOCAL_API
+      - DESTINATION_PATH=$DESTINATION_PATH
+      - USERS_WITHE_LIST=$USERS_WITHE_LIST
+      - GET_INTERNAL_USAGE=$GET_INTERNAL_USAGE
+      - TELEGRAM_DOWNLOAD_DATA_FILE_PATH=$TELEGRAM_DOWNLOAD_DATA_FILE_PATH
+      - LOCAL_TELEGRAM_DOWNLOAD_DATA_FILE_PATH=$LOCAL_TELEGRAM_DOWNLOAD_DATA_FILE_PATH
+```
+
+che necessita delle variabili sopra indicate del file `.env` e aggiungendo la seguente variabile
+
+```
+LOCAL_DESTINATION_PATH=<telegram_data_path>
 ```
