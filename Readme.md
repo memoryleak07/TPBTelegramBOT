@@ -1,5 +1,5 @@
 # Builds
-[![Docker image release](https://github.com/memoryleak07/TPBTelegramBOT/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/memoryleak07/TPBTelegramBOT/actions/workflows/release.yml)
+[![Docker image release](https://github.com/memoryleak07/TPBTelegramBOT/actions/workflows/release.yml/badge.svg)](https://github.com/memoryleak07/TPBTelegramBOT/actions/workflows/release.yml)
 
 # Modifiche
 
