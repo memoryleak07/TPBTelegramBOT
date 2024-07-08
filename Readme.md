@@ -1,3 +1,6 @@
+# Builds
+[![Docker image release](https://github.com/memoryleak07/TPBTelegramBOT/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/memoryleak07/TPBTelegramBOT/actions/workflows/release.yml)
+
 # Modifiche
 
 Aggiunto all'head la possibilità di effettuare il download di documenti, musica e video condividendo il media previa scelta della directory di download sul dispositivo di destinazione.</br>
