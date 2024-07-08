@@ -9,7 +9,7 @@ on:
     - 'v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+'
 
 env:
-  REGISTRY: ghcr.io
+  REGISTRY: ghcr.io/memoryleak07
   IMAGE_NAME: tpb-telegrambot
   DOCKER_FILE_PATH: './Dockerfile'
 
