@@ -11,7 +11,7 @@ on:
 env:
   REGISTRY: ghcr.io/memoryleak07
   IMAGE_NAME: tpb-telegrambot
-  DOCKER_FILE_PATH: './Dockerfile'
+  DOCKER_FILE_PATH: './src/TelegramBOT/Dockerfile'
 
 jobs:
   build-and-push-image:
@@ -38,7 +38,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
-          context: .
+          context: ./src/TelegramBOT/
           file: ${{env.DOCKER_FILE_PATH}}
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}, ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
