@@ -1,5 +1,5 @@
 # Builds
-[![tpb-telegrambot image release](https://github.com/memoryleak07/TPBTelegramBOT/actions/workflows/release.yml/badge.svg)](https://github.com/memoryleak07/TPBTelegramBOT/actions/workflows/release.yml)
+[![tpb-telegrambot image release](https://github.com/memoryleak07/TPBTelegramBOT/actions/workflows/telegram-bot-release.yml/badge.svg)](https://github.com/memoryleak07/TPBTelegramBOT/actions/workflows/telegram-bot-release.yml)
 
 # How to use TelegramBot
 
