@@ -11,3 +11,4 @@ settings.json
 .env
 /data.dict
 data.dict
+.DS_Store
