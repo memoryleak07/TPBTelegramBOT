@@ -1,5 +1,5 @@
 # Usa un'immagine di base di Python
-FROM --platform=$BUILDPLATFORM python:3.10-slim
+FROM python:3.10-slim
 
 # Imposta il work directory nel container
 WORKDIR /app
