@@ -2,3 +2,4 @@ python-qbittorrent==0.4.3
 python-telegram-bot==20.0a0
 python-dotenv==1.0.1
 tpblite==0.8.0
+mega.py==1.0.8
