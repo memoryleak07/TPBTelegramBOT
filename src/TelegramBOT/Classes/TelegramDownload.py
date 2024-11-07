@@ -280,7 +280,12 @@ async def downloader_async(data: TelegramFile, context: CallbackContext):
     data.status = DownloadStatus.DOWNLOADED
     await data_manage.update_file(data)
 
-    logger.info(f"End downloader, file saved {data.get_full_destination_path()}")
+    if data.downloader_type == DownloaderType.MEGA:
+        full_path = f"{data.destination_path}/{data.get_file_name()}"
+    else:
+        full_path = data.get_full_destination_path()
+    logger.info(f"End downloader, file saved {full_path}")
+    
     await context.bot.send_message(chat_id=data.chat.id, text=f'File \"{data.get_file_name()}\" downloaded successfully!')
 
 
