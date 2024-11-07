@@ -81,10 +81,11 @@ def restricted(func):
 async def start(update: Update, context: CallbackContext):
     await update.message.reply_text(
 """
-For torrent send /search
-for magnet link download send /magnet
-for telegram download send /dwtelegram
-""")
+For `torrent search` send /search
+for `magnet link` download send /magnet
+for `telegram` or `Mega` download send /dwtelegram
+for `download list` send /dwList
+""", parse_mode=parse_mode)
 
 
 async def error(update: Update, context: CallbackContext):
@@ -205,6 +206,7 @@ def main() -> None:
     application.add_handler(CommandHandler("pauseall", restricted(pauseall)))
     application.add_handler(CommandHandler("resumeall", restricted(resumeall)))
     application.add_handler(CommandHandler("forceall", restricted(forceall)))
+    application.add_handler(CommandHandler("dwList", restricted(execute_dw_list_command)))
 
     # log all errors
     application.add_error_handler(error)
