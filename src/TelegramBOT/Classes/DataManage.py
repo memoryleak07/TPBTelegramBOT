@@ -1,7 +1,6 @@
 import pickle
 import os
 from Models.DownloadStatus import DownloadStatus
-
 from Models.EnvKeysConsts import EnvKeysConsts
 from Models.TelegramFile import TelegramFile
 
@@ -58,7 +57,7 @@ class DataManage:
         return workableList
     
     async def update_file_name(self, index, file_name):
-        self.Data[index].fileNameSetted = file_name
+        self.Data[index].file_name_setted = file_name
         
         self.write_data()
 

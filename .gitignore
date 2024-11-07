@@ -12,3 +12,6 @@ settings.json
 /data.dict
 data.dict
 .DS_Store
+src/TelegramBOT/Classes/__pycache__
+src/TelegramBOT/Helpers/__pycache__
+src/TelegramBOT/Models/__pycache__

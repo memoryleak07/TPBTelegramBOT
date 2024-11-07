@@ -11,10 +11,12 @@ from telegram.ext import (
     CallbackContext
 )
 from Classes.DataManage import DataManage
+from Classes.MegaDownloader import download_mega_file
 from Helpers.MemoryManage import MemoryManage
 from Helpers.Converters import Converters
 from Helpers.PathManage import PathManage
 from Models.DownloadStatus import DownloadStatus
+from Models.DownloaderType import DownloaderType
 from Models.EnvKeysConsts import EnvKeysConsts
 from Models.TelegramFile import TelegramFile
 
@@ -109,7 +111,8 @@ async def delete_old_message_and_update_path(update: Update, context: CallbackCo
                                                 chat_id=update.message.chat_id)
         return message
     except:
-        return "Generic error on `delete_old_message_and_update_path` method\n"
+        return "Generic error on `delete_old_message_and_update_path` method"
+
 
 async def dir_specify(update: Update, context: CallbackContext):
     """Reply dir to save"""
@@ -129,7 +132,10 @@ async def ls_command(update: Update, context: CallbackContext, message=""):
         context.user_data[destination_path_key] = destination_path
         directories = PathManage.GetInlineAllDirectories(destination_path, destination_path)
 
-    message = f'{message}The destination path is `{await get_path(context)}`\nselect or send the next directory name (for create and move in)'
+    message = f"""
+{message}
+The destination path is `{await get_path(context)}`
+select or send the next directory name (for create and move in)"""
     if update.callback_query:
         dir_message = await update.callback_query.message.reply_text(message, reply_markup=InlineKeyboardMarkup(
                                     inline_keyboard=directories, resize_keyboard=True),
@@ -151,7 +157,12 @@ async def ls_dir_command(update: Update, context: CallbackContext):
 async def next_command(update: Update, context: CallbackContext):
     """Run for await download file"""
     message = await delete_old_message_and_update_path(update, context, False)
-    await update.message.reply_text(f'{message}Send file for download in path: `{await get_path(context)}`', parse_mode=parse_mode)
+    await update.message.reply_text(
+f"""
+{message}
+Send `Telegram` file or `Mega` link for download in path:
+`{await get_path(context)}`""", parse_mode=parse_mode)
+    
     await update.message.reply_text(
 """
 The commands available in this section are:
@@ -174,31 +185,45 @@ async def end_telegram_download(update: Update, context: CallbackContext):
 async def append_download(update: Update, context: CallbackContext):
     """Add file to download list"""
     if update.message.audio:
-        doc = update.message.audio
+        await append_to_downalod_list(update.message.audio, update, context)
     elif update.message.document:
-        doc = update.message.document
+        await append_to_downalod_list(update.message.document, update, context)
     # elif update.message.photo:
     #     doc = update.message.photo
     elif update.message.video:
-        doc = update.message.video
+        await append_to_downalod_list(update.message.video, update, context)
+    elif update.message.text:
+        righe = update.message.text.splitlines()
+
+        for riga in righe:
+            downloader_type = DownloaderType.get_downloader_type_by_value(riga)
+            if downloader_type:
+                await append_to_downalod_list(riga, update, context, downloader_type)
     else:
         await update.message.reply_text("Type not accepted")
-        return DOC
 
+    return DOC
+
+
+async def append_to_downalod_list(doc, update: Update, context: CallbackContext, downloader_type=DownloaderType.TELEGRAM):
     dest = await get_path(context)
     if not update.message.forward_from_chat:
         forwoard_from = update.message.forward_from
     else:
         forwoard_from = update.message.forward_from_chat
+    
     file = TelegramFile(
         file=doc,
         forward_from=forwoard_from,
         destinationPath=dest,
         chat=update.message.chat,
-        caption_message=update.message.caption)
+        caption_message=update.message.caption,
+        downloader_type=downloader_type)
+    
+    if downloader_type == DownloaderType.MEGA:
+        file.file_name_setted = doc
+    
     await data_manage.update_file(file)
-
-    return DOC
 
 
 async def get_path(context: CallbackContext):
@@ -223,26 +248,29 @@ async def downloader_async(data: TelegramFile, context: CallbackContext):
     """Downloader"""
     logger.info(f"Run downloader {data.file}")
 
-    path = data.destinationPath
+    path = data.destination_path
     PathManage.create_dir(path)
     logger.info(f"Path '{path}' created")
     try:
         data.status = DownloadStatus.DOWNLOADING
         await data_manage.update_file(data)
-        dw = await context.bot.get_file(data.file.file_id)
-        logger.info(f"API download of '{data.get_file_name()}' executed\nSaved at '{dw.file_path}'")
-        if not is_local_api:
-            # Scarica localmente il file
-            await dw.download(custom_path=data.get_full_destination_path())
+        if data.downloader_type == DownloaderType.TELEGRAM:
+            dw = await context.bot.get_file(data.file.file_id)
+            logger.info(f"API download of '{data.get_file_name()}' executed\nSaved at '{dw.file_path}'")
+            if not is_local_api:
+                # Scarica localmente il file
+                await dw.download(custom_path=data.get_full_destination_path())
+            else:
+                # Muove il file scaricato dall'API nella directory desiderata
+                # 'http://192.168.0.18:8880/file/bot<bottoken>//home/pi/Documents/telegram-bot-api/build/<token>/videos/file_7.mp4'
+                file_location = f'{dw.file_path}'.replace(
+                    f'{base_file_url}{bot_token}/', '')
+                logger.info(f"file_location: {file_location}")
+                logger.info(f"full destination path: {data.get_full_destination_path()}")
+                destination_path = data.get_full_destination_path()
+                shutil.move(file_location, destination_path)
         else:
-            # Muove il file scaricato dall'API nella directory desiderata
-            # 'http://192.168.0.18:8880/file/bot<bottoken>//home/pi/Documents/telegram-bot-api/build/<token>/videos/file_7.mp4'
-            file_location = f'{dw.file_path}'.replace(
-                f'{base_file_url}{bot_token}/', '')
-            logger.info(f"file_location: {file_location}")
-            logger.info(f"full destination path: {data.get_full_destination_path()}")
-            destination_path = data.get_full_destination_path()
-            shutil.move(file_location, destination_path)
+            await download_mega_file(data)
     except Exception as e:
         logger.exception(e)
         data.status = DownloadStatus.ERROR
@@ -282,6 +310,7 @@ async def dw_list(update: Update, context: CallbackContext):
     return DOC
 
 async def execute_dw_list_command(update: Update, context: CallbackContext):
+    await start_job(update, context)
     download_list = await data_manage.get_view_download_list()
     items_length = 20
     if len(download_list) > 0:
@@ -295,7 +324,6 @@ async def execute_dw_list_command(update: Update, context: CallbackContext):
         await update.message.reply_text("Send /setsNew for set all download status \"ERROR\" in \"NEW\"")
     else:
         await update.message.reply_text("Download list is empty")
-    context.user_data[download_list_key] = True
 
 async def set_to_new(update: Update, context: CallbackContext):
     """Set to new all file in error state"""
@@ -330,4 +358,5 @@ async def end_set_name(update: Update, context: CallbackContext):
 async def dw_list_set_name(update: Update, context: CallbackContext):
     """Set to new all file in error state"""
     await execute_dw_list_command(update, context)
+    context.user_data[download_list_key] = True
     return SETNAME
